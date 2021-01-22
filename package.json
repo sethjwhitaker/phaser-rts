@@ -1,0 +1,22 @@
+{
+  "name": "phaser-rts",
+  "version": "0.0.0",
+  "description": "RTS built with phaser",
+  "repository": "https://github.com/sethjwhitaker/phaser-rts.git",
+  "author": "Seth Whitaker <sethjwhitaker@yahoo.com>",
+  "license": "MIT",
+  "private": true,
+  "devDependencies": {
+    "babel-cli": "^6.26.0",
+    "webpack-cli": "^4.4.0"
+  },
+  "dependencies": {
+    "phaser": "^3.52.0",
+    "phaser-ui-tools": "^2.0.0-beta",
+    "webpack": "^5.16.0"
+  },
+  "scripts": {
+    "build": "webpack",
+    "test": "webpack && python -m http.server"
+  }
+}
