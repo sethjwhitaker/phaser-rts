@@ -29,28 +29,38 @@ function preload () {
 }
 
 function create() {
-    const multiplayerButton = this.add.text(
-        1280/2, 720/2, "Find a Match", {
-            backgroundColor: "#ffffff",
-            color: "#000000",
-            padding: {
-                x: 10,
-                y: 10
-            }
-        }
-    ).setOrigin(.5);
+    const multiplayerButton = createButton("Find a Match", this);
+    const cancelButton = createButton("Cancel", this);
+    toggleButton(cancelButton);
 
-    multiplayerButton.setInteractive();
     multiplayerButton.on('pointerup', () => {
-        mpbuttonEventHandler(multiplayerButton, this);
+        mpbuttonEventHandler(multiplayerButton, cancelButton);
     });
+    cancelButton.on("pointerup", () => {
+        cbEventHandler(cancelButton, multiplayerButton);
+    });
+    
 }
 
-function mpbuttonEventHandler(gameObject, scene) {
+function mpbuttonEventHandler(mpb, cb) {
     console.log("multiplayer button pressed");
-    gameObject.setActive(false).setVisible(false);
-    const cancelButton = scene.add.text(
-        1280/2, 720/2, "Cancel", {
+    toggleButton(mpb);
+    toggleButton(cb);
+
+    LobbyConnection.joinLobby();
+}
+
+function cbEventHandler(cb, mpb) {
+    console.log("cancel button pressed");
+    toggleButton(cb);
+    toggleButton(mpb);
+
+    LobbyConnection.leaveLobby();
+}
+
+function createButton(text, scene) {
+    return scene.add.text(
+        1280/2, 720/2, text, {
             backgroundColor: "#ffffff",
             color: "#000000",
             padding: {
@@ -59,15 +69,13 @@ function mpbuttonEventHandler(gameObject, scene) {
             }
         }
     ).setOrigin(.5).setInteractive();
-    cancelButton.on("pointerup", () => {
-        cbEventHandler(cancelButton, scene);
-    });
-
-    LobbyConnection.joinLobby();
 }
 
-function cbEventHandler(gameObject, scene) {
-    console.log("cancel button pressed");
-    LobbyConnection.leaveLobby();
+function toggleButton(button) {
+    if(button.active) {
+        button.setActive(false).setVisible(false);
+    } else {
+        button.setActive(true).setVisible(true);
+    }
 }
 
