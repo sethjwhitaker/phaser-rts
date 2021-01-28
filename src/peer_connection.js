@@ -24,11 +24,21 @@ export default class PeerConnection {
 
             this.connection.on('data', data => {
                 console.log("message received: " + data);
+                if(data.substr(0, 4) === "chat") {
+                    document.body.dispatchEvent(new CustomEvent("chatReceived", {detail: data.substr(5)}));
+                } else if (data.substr(0, 4) === "name") {
+                    document.body.dispatchEvent(new CustomEvent("nameReceived", {detail: data.substr(5)}));
+                }
             });
-
-            this.connection.send('Hello!');
             
         });
+    }
+
+    sendName(name) {
+        this.connection.send(`name ${name}`);
+    }
+    sendChat(text) {
+        this.connection.send(`chat ${text}`);
     }
 
     static connect(id) {
