@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
-//import Peer from 'peerjs';
 
 import LobbyConnection from './websocket';
+import PeerConnection from './peer_connection';
 
 const config = {
     type: Phaser.AUTO,
@@ -9,6 +9,10 @@ const config = {
         width: 1280,
         height: 720,
     },
+    dom: {
+        createContainer: true
+    },
+    parent: document.body,
     autoCenter: Phaser.Scale.CENTER_BOTH,
     scene: {
         preload: preload,
@@ -17,12 +21,6 @@ const config = {
 }
 
 const game = new Phaser.Game(config);
-/*const peer = new Peer();
-peer.on('open', function(id) {
-    console.log('My peer ID is: ' + id);
-});*/
-
-
 
 function preload () {
     
@@ -31,29 +29,62 @@ function preload () {
 function create() {
     const multiplayerButton = createButton("Find a Match", this);
     const cancelButton = createButton("Cancel", this);
+    const input = document.createElement("input");
+    input.setAttribute('type', 'text');
+    input.setAttribute('id', 'player-name');
+    const playerNameMemory = window.localStorage.getItem('playerName');
+    if(playerNameMemory) input.value = playerNameMemory;
+
+    const inobj = this.add.dom(1280/2, 720/2-50, input).setInteractive().setOrigin(.5);
+
     toggleButton(cancelButton);
 
     multiplayerButton.on('pointerup', () => {
-        mpbuttonEventHandler(multiplayerButton, cancelButton);
+        mpbuttonEventHandler(multiplayerButton, cancelButton, inobj);
     });
     cancelButton.on("pointerup", () => {
-        cbEventHandler(cancelButton, multiplayerButton);
+        cbEventHandler(cancelButton, multiplayerButton, inobj);
     });
     
+    document.body.addEventListener('matchFound', e => {
+        console.log("match found event heard");
+        if(e.detail.length > 0) {
+            PeerConnection.connect(e.detail);
+        } else {
+            const id = PeerConnection.getId();
+            LobbyConnection.waitForMatch(id);
+        }
+            
+    });
+
+    document.body.addEventListener('peerConnection', (e) => {
+        console.log("PeerConnection Event Heard");
+        LobbyConnection.leaveLobby();
+        // load new scene
+    })
 }
 
-function mpbuttonEventHandler(mpb, cb) {
+function mpbuttonEventHandler(mpb, cb, inp) {
     console.log("multiplayer button pressed");
+    const nameEl = document.getElementById("player-name");
+    if(nameEl.value.length === 0) {
+        nameEl.value = 'name';
+    }
+
+    window.localStorage.setItem('playerName', nameEl.value);
+
     toggleButton(mpb);
+    toggleButton(inp);
     toggleButton(cb);
 
-    LobbyConnection.joinLobby();
+    LobbyConnection.joinLobby(nameEl.value);
 }
 
-function cbEventHandler(cb, mpb) {
+function cbEventHandler(cb, mpb, inp) {
     console.log("cancel button pressed");
     toggleButton(cb);
     toggleButton(mpb);
+    toggleButton(inp);
 
     LobbyConnection.leaveLobby();
 }
@@ -78,4 +109,3 @@ function toggleButton(button) {
         button.setActive(true).setVisible(true);
     }
 }
-

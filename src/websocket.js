@@ -1,5 +1,6 @@
 const protocol = "ws://";
 const url = protocol + location.host;
+const matchFoundEvent = new CustomEvent('matchFound', {detail: ""});
 
 export default class LobbyConnection {
 
@@ -8,7 +9,7 @@ export default class LobbyConnection {
     static timeSincePing = null;
     static disconnectTimer = null;
     
-    static joinLobby() {
+    static joinLobby(playerName) {
         // TODO: handle possible errors such as calling join
         // lobby when a client instance already exists
         if(this.client === null) {
@@ -20,7 +21,7 @@ export default class LobbyConnection {
         this.client.onopen = () => {
             console.log("Connection opened");
             this.connected = true;
-            this.client.send('Message From Client');
+            this.client.send('name ' + playerName);
         }
     
         this.client.onerror = (error) => {
@@ -28,13 +29,18 @@ export default class LobbyConnection {
         }
     
         this.client.onmessage = (event) => {
+            console.log("(ws): " + event.data);
             if(event.data === " ") {
                 this.client.send(" ");
-
                 this.pingReceived();
-                    
             } else if(event.data === "?") {
                 this.pingReceived();
+            } else if(event.data === "match") {
+                console.log("match message received");
+                document.body.dispatchEvent(matchFoundEvent);
+            } else if(event.data.substr(0, 4) === "peer") {
+                console.log("peer message received");
+                document.body.dispatchEvent(new CustomEvent('matchFound', {detail: event.data.substr(5)}));
             }
         };
     
@@ -48,6 +54,11 @@ export default class LobbyConnection {
     static leaveLobby() {
         this.client.close();
         this.client = null;
+    }
+
+    static waitForMatch(id) {
+        this.client.send("match " + id);
+        console.log("match message sent " + id);
     }
 
     static pingReceived() {
@@ -74,6 +85,8 @@ export default class LobbyConnection {
             this.disconnectTimer = null;
         }
     }
+
+
 
 }
 
