@@ -36,6 +36,7 @@
   "scripts": {
     "build": "webpack",
     "test": "webpack && python -m http.server",
-    "server": "nodemon --exec babel-node server/app.js"
+    "server": "nodemon --exec babel-node server/app.js",
+    "start": "nodemon --exec babel-node server/app.js"
   }
 }
