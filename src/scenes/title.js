@@ -17,7 +17,11 @@ export default class TitleScene extends Phaser.Scene {
         const playerNameMemory = window.localStorage.getItem('playerName');
         if(playerNameMemory) input.value = playerNameMemory;
 
-        const inobj = this.add.dom(1280/2, 720/2-50, input).setInteractive().setOrigin(.5);
+        const inobj = this.add.dom(
+            this.sys.game.scale.gameSize.width/2, 
+            this.sys.game.scale.gameSize.height/2-50, 
+            input
+        ).setInteractive().setOrigin(.5);
 
         toggleButton(cancelButton);
 
@@ -74,7 +78,9 @@ function cbEventHandler(cb, mpb, inp) {
 
 function createButton(text, scene) {
     return scene.add.text(
-        1280/2, 720/2, text, {
+        scene.sys.game.scale.gameSize.width/2,
+        scene.sys.game.scale.gameSize.height/2, 
+        text, {
             backgroundColor: "#ffffff",
             color: "#000000",
             padding: {
