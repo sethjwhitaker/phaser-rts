@@ -1,4 +1,4 @@
-const protocol = "ws://";
+const protocol = "wss://";
 const url = protocol + location.host;
 const matchFoundEvent = new CustomEvent('matchFound', {detail: ""});
 
