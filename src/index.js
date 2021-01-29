@@ -8,7 +8,7 @@ const chatScene = new ChatScene();
 const config = {
     type: Phaser.AUTO,
     scale: {
-        mode: Phaser.Scale.RESIZE,
+        mode: Phaser.Scale.FIT,
         width: 1280,
         height: 720,
     },
