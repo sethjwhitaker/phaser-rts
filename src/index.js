@@ -1,39 +1,27 @@
 import Phaser from 'phaser';
-import ui from 'phaser-ui-tools';
+import TitleScene from './scenes/title';
+import ChatScene from './scenes/chat';
+
+const titleScene = new TitleScene();
+const chatScene = new ChatScene();
 
 const config = {
     type: Phaser.AUTO,
     scale: {
+        mode: Phaser.Scale.FIT,
         width: 1280,
         height: 720,
     },
-    autoCenter: Phaser.Scale.CENTER_BOTH,
-    scene: {
-        preload: preload,
-        create: create,
-        update: update
-    }
+    dom: {
+        createContainer: true
+    },
+    parent: document.body,
+    autoCenter: Phaser.Scale.CENTER_BOTH
 }
 
 const game = new Phaser.Game(config);
 
-function preload () {
-    
-}
+game.scene.add('title', titleScene);
+game.scene.add('chat', chatScene);
 
-function create () {
-    const multiplayerButton = this.add.text(
-        1280/2, 720/2, "Find a Match", {
-            backgroundColor: "#ffffff",
-            color: "#000000",
-            padding: {
-                x: 10,
-                y: 10
-            }
-        }
-    ).setOrigin(.5);
-}
-
-function update() {
-
-}
+game.scene.start('title');
