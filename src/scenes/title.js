@@ -9,27 +9,28 @@ export default class TitleScene extends Phaser.Scene {
     }
 
     create() {
-        const multiplayerButton = createButton("Find a Match", this);
-        const cancelButton = createButton("Cancel", this);
-        const input = document.createElement("input");
-        input.setAttribute('type', 'text');
-        input.setAttribute('id', 'player-name');
+        const ui = {
+            multiplayerButton: createButton("Find a Match", this),
+            singleplayerButton: createButton("Single Player", this),
+            cancelButton: createButton("Cancel", this),
+            input: createInput(this)
+        }
+
+        ui.singleplayerButton.y -= ui.singleplayerButton.height+10;
+
         const playerNameMemory = window.localStorage.getItem('playerName');
-        if(playerNameMemory) input.value = playerNameMemory;
+        if(playerNameMemory) ui.input.node.value = playerNameMemory;
 
-        const inobj = this.add.dom(
-            this.sys.game.scale.gameSize.width/2, 
-            this.sys.game.scale.gameSize.height/2-50, 
-            input
-        ).setInteractive().setOrigin(.5);
+        toggleUI(ui.cancelButton);
 
-        toggleButton(cancelButton);
-
-        multiplayerButton.on('pointerup', () => {
-            mpbuttonEventHandler(multiplayerButton, cancelButton, inobj);
+        ui.multiplayerButton.on('pointerup', () => {
+            mpbuttonEventHandler(ui);
         });
-        cancelButton.on("pointerup", () => {
-            cbEventHandler(cancelButton, multiplayerButton, inobj);
+        ui.singleplayerButton.on('pointerup', () => {
+            spbuttonEventHandler(ui, this);
+        });
+        ui.cancelButton.on("pointerup", () => {
+            cbEventHandler(ui);
         });
         
         document.body.addEventListener('matchFound', e => {
@@ -40,7 +41,6 @@ export default class TitleScene extends Phaser.Scene {
                 const id = PeerConnection.getId();
                 LobbyConnection.waitForMatch(id);
             }
-                
         });
 
         document.body.addEventListener('peerConnection', (e) => {
@@ -51,27 +51,35 @@ export default class TitleScene extends Phaser.Scene {
     }
 }
 
-function mpbuttonEventHandler(mpb, cb, inp) {
+function mpbuttonEventHandler(ui) {
     console.log("multiplayer button pressed");
-    const nameEl = document.getElementById("player-name");
+    const nameEl = ui.input.node;
     if(nameEl.value.length === 0) {
         nameEl.value = 'name';
     }
-
     window.localStorage.setItem('playerName', nameEl.value);
 
-    toggleButton(mpb);
-    toggleButton(inp);
-    toggleButton(cb);
+    toggleAll(ui);
 
     LobbyConnection.joinLobby(nameEl.value);
 }
 
-function cbEventHandler(cb, mpb, inp) {
+function spbuttonEventHandler(ui, scene) {
+    console.log("multiplayer button pressed");
+    const nameEl = ui.input.node;
+    if(nameEl.value.length === 0) {
+        nameEl.value = 'name';
+    }
+    window.localStorage.setItem('playerName', nameEl.value);
+
+    toggleAll(ui);
+
+    scene.scene.start('game', {numPlayers: 1, playerName: nameEl.value});
+}
+
+function cbEventHandler(ui) {
     console.log("cancel button pressed");
-    toggleButton(cb);
-    toggleButton(mpb);
-    toggleButton(inp);
+    toggleAll(ui)
 
     LobbyConnection.leaveLobby();
 }
@@ -91,10 +99,26 @@ function createButton(text, scene) {
     ).setOrigin(.5).setInteractive();
 }
 
-function toggleButton(button) {
-    if(button.active) {
-        button.setActive(false).setVisible(false);
+function createInput(scene) {
+    const input = document.createElement("input");
+    input.setAttribute('type', 'text');
+    input.setAttribute('id', 'player-name');
+    return scene.add.dom(
+        scene.sys.game.scale.gameSize.width/2, 
+        scene.sys.game.scale.gameSize.height/2+50, 
+        input
+    ).setInteractive().setOrigin(.5);
+}
+
+function toggleAll(ui) {
+    for(const el in ui) {
+        toggleUI(ui[el]);
+    }
+}
+function toggleUI(element) {
+    if(element.active) {
+        element.setActive(false).setVisible(false);
     } else {
-        button.setActive(true).setVisible(true);
+        element.setActive(true).setVisible(true);
     }
 }
