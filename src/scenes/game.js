@@ -16,6 +16,29 @@ export default class GameScene extends Phaser.Scene {
                     y: 10
                 }
             }
-        ).setOrigin(.5)
+        ).setOrigin(.5);
+
+        const quitButton = this.add.text(
+            0,
+            this.sys.game.scale.gameSize.height,
+            "QUIT", 
+            {
+                backgroundColor: "#ffffff",
+                color: "#000000",
+                padding: {
+                    x: 10, 
+                    y: 10
+                }
+            }
+        ).setOrigin(.5).setInteractive();
+        quitButton.x += quitButton.width/2;
+        quitButton.y -= quitButton.height/2;
+        quitButton.on("pointerup", () => {
+            this.qbhandler();
+        });
+    }
+
+    qbhandler() {
+        this.scene.start('title');
     }
 }
