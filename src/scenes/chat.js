@@ -34,6 +34,25 @@ export default class ChatScene extends Phaser.Scene {
             }
         });
 
+        const backButton = this.add.text(
+            0,
+            this.sys.game.scale.gameSize.height,
+            "Back", 
+            {
+                backgroundColor: "#ffffff",
+                color: "#000000",
+                padding: {
+                    x: 10, 
+                    y: 10
+                }
+            }
+        ).setOrigin(.5).setInteractive();
+        backButton.x += backButton.width/2;
+        backButton.y -= backButton.height/2;
+        backButton.on("pointerup", () => {
+            this.bbhandler();
+        });
+
         document.body.addEventListener("chatReceived", (event) => {
             console.log("chat event heard");
             chatScroll.addChat(event.detail, true, this);
@@ -49,6 +68,10 @@ export default class ChatScene extends Phaser.Scene {
                 }
             }).setOrigin(0.5, 0);
         })
+    }
+
+    bbhandler() {
+        this.scene.setVisible(false);
     }
 }
 

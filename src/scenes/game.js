@@ -6,6 +6,11 @@ export default class GameScene extends Phaser.Scene {
     }
 
     create(data) {
+
+        this.peerConnection = data.peerConnection;
+        this.scene.launch('chat', {peerConnection: this.peerConnection});
+        this.scene.setVisible(false, 'chat');
+
         this.add.text(
             this.sys.game.scale.gameSize.width/2,
             this.sys.game.scale.gameSize.height/2, 
@@ -36,9 +41,31 @@ export default class GameScene extends Phaser.Scene {
         quitButton.on("pointerup", () => {
             this.qbhandler();
         });
+
+        const chatButton = this.add.text(
+            0,
+            this.sys.game.scale.gameSize.height,
+            "CHAT", 
+            {
+                backgroundColor: "#ffffff",
+                color: "#000000",
+                padding: {
+                    x: 10, 
+                    y: 10
+                }
+            }
+        ).setOrigin(.5).setInteractive();
+        chatButton.x += chatButton.width/2;
+        chatButton.y -= chatButton.height*1.5;
+        chatButton.on("pointerup", () => {
+            this.cbhandler();
+        });
     }
 
     qbhandler() {
         this.scene.start('title');
+    }
+    cbhandler() {
+        this.scene.setVisible(true, 'chat');
     }
 }

@@ -46,33 +46,34 @@ export default class TitleScene extends Phaser.Scene {
         document.body.addEventListener('peerConnection', (e) => {
             console.log("PeerConnection Event Heard");
             LobbyConnection.leaveLobby();
-            this.scene.start('chat', {peerConnection: e.detail});
+            const nameEl = ui.input.node;
+            if(nameEl.value.length === 0) {
+                nameEl.value = 'name';
+            }
+            this.scene.start('game', {
+                numPlayers: 2, 
+                playerName: nameEl.value, 
+                peerConnection: e.detail
+            });
         })
     }
 }
 
+/**
+ * Handles multiplayer button press events.
+ * 
+ * @param {Object} ui Object containing the ui elements on the title screen.
+ */
 function mpbuttonEventHandler(ui) {
     console.log("multiplayer button pressed");
-    const nameEl = ui.input.node;
-    if(nameEl.value.length === 0) {
-        nameEl.value = 'name';
-    }
-    window.localStorage.setItem('playerName', nameEl.value);
-
-    toggleAll(ui);
+    prepareGameStart();
 
     LobbyConnection.joinLobby(nameEl.value);
 }
 
 function spbuttonEventHandler(ui, scene) {
-    console.log("multiplayer button pressed");
-    const nameEl = ui.input.node;
-    if(nameEl.value.length === 0) {
-        nameEl.value = 'name';
-    }
-    window.localStorage.setItem('playerName', nameEl.value);
-
-    toggleAll(ui);
+    console.log("singleplayer button pressed");
+    prepareGameStart();
 
     scene.scene.start('game', {numPlayers: 1, playerName: nameEl.value});
 }
@@ -121,4 +122,14 @@ function toggleUI(element) {
     } else {
         element.setActive(true).setVisible(true);
     }
+}
+
+function prepareGameStart() {
+    const nameEl = ui.input.node;
+    if(nameEl.value.length === 0) {
+        nameEl.value = 'name';
+    }
+    window.localStorage.setItem('playerName', nameEl.value);
+
+    toggleAll(ui);
 }
