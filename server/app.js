@@ -1,9 +1,18 @@
 import express from 'express';
 import { Server } from 'ws';
 import path from 'path';
+import webpackConfig from '../webpack.dev.js';
+import webpack from 'webpack';
+import webpackDevMiddleware from 'webpack-dev-middleware';
 
 const port = process.env.PORT || 80;
 const app = express();
+const compiler = webpack(webpackConfig);
+app.use(
+    webpackDevMiddleware(compiler, {
+        publicPath: webpackConfig.output.publicPath
+    })
+);
 app.use(express.static(path.join(__dirname, '../dist')));
 const server = app.listen(port, () => {
     console.log(`Websocket server started on port ` + port);

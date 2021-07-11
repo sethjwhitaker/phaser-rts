@@ -66,14 +66,14 @@ export default class TitleScene extends Phaser.Scene {
  */
 function mpbuttonEventHandler(ui) {
     console.log("multiplayer button pressed");
-    prepareGameStart();
+    const nameEl = prepareGameStart(ui);
 
     LobbyConnection.joinLobby(nameEl.value);
 }
 
 function spbuttonEventHandler(ui, scene) {
     console.log("singleplayer button pressed");
-    prepareGameStart();
+    const nameEl = prepareGameStart(ui);
 
     scene.scene.start('game', {numPlayers: 1, playerName: nameEl.value});
 }
@@ -116,6 +116,7 @@ function toggleAll(ui) {
         toggleUI(ui[el]);
     }
 }
+
 function toggleUI(element) {
     if(element.active) {
         element.setActive(false).setVisible(false);
@@ -124,7 +125,7 @@ function toggleUI(element) {
     }
 }
 
-function prepareGameStart() {
+function prepareGameStart(ui) {
     const nameEl = ui.input.node;
     if(nameEl.value.length === 0) {
         nameEl.value = 'name';
@@ -132,4 +133,6 @@ function prepareGameStart() {
     window.localStorage.setItem('playerName', nameEl.value);
 
     toggleAll(ui);
+
+    return nameEl;
 }
