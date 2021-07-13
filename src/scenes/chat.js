@@ -4,16 +4,18 @@ import Phaser from 'phaser';
 export default class ChatScene extends Phaser.Scene {
     constructor() {
         super({key: 'chat'});
+        this.show = this.show.bind(this);
+        this.hide = this.hide.bind(this);
     }
 
     create(data) {
         console.log("Chat Scene Loaded");
         const peerConnection = data.peerConnection;
 
-        const input = document.createElement("input");
-        input.setAttribute('type', 'text');
-        input.setAttribute('id', 'chatbox');
-        const inobj = this.add.dom(this.game.config.width/2, this.game.config.height-100, input, {
+        this.inputEl = document.createElement("input");
+        this.inputEl.setAttribute('type', 'text');
+        this.inputEl.setAttribute('id', 'chatbox');
+        const inobj = this.add.dom(this.game.config.width/2, this.game.config.height-100, this.inputEl, {
             height: '30px', 
             width: `${this.game.config.width/2}px`,
             fontSize: `20px`,
@@ -24,11 +26,11 @@ export default class ChatScene extends Phaser.Scene {
         const chatScroll = new ChatScroll();
 
         this.input.keyboard.on('keyup-ENTER', (event) => {
-            if(document.activeElement.id === input.id) {
-                if(input.value.length >0) {
-                    peerConnection.sendChat(input.value);
-                    chatScroll.addChat(input.value, false, this);
-                    input.value = "";
+            if(document.activeElement.id === this.inputEl.id) {
+                if(this.inputEl.value.length >0) {
+                    if(peerConnection) peerConnection.sendChat(this.inputEl.value);
+                    chatScroll.addChat(this.inputEl.value, false, this);
+                    this.inputEl.value = "";
                 }
 
             }
@@ -68,10 +70,24 @@ export default class ChatScene extends Phaser.Scene {
                 }
             }).setOrigin(0.5, 0);
         })
+
+        this.hide();
+    }
+
+    show() {
+        this.inputEl.style.display = "inline-block";
+        this.scene.setVisible(true);
+    }
+
+    hide() {
+        this.inputEl.style.display = "none";
+        this.scene.setVisible(false);
     }
 
     bbhandler() {
-        this.scene.setVisible(false);
+        console.log("back button pressed")
+        this.hide();
+        this.scene.setVisible(true, 'game');
     }
 }
 

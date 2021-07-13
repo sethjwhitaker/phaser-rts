@@ -9,7 +9,6 @@ export default class GameScene extends Phaser.Scene {
 
         this.peerConnection = data.peerConnection;
         this.scene.launch('chat', {peerConnection: this.peerConnection});
-        this.scene.setVisible(false, 'chat');
 
         this.add.text(
             this.sys.game.scale.gameSize.width/2,
@@ -63,9 +62,13 @@ export default class GameScene extends Phaser.Scene {
     }
 
     qbhandler() {
+        console.log('quit pressed')
+        this.scene.stop('chat');
+        this.scene.stop();
         this.scene.start('title');
     }
     cbhandler() {
-        this.scene.setVisible(true, 'chat');
+        this.scene.setVisible(false);
+        this.scene.get('chat').show();
     }
 }

@@ -9,6 +9,7 @@ export default class TitleScene extends Phaser.Scene {
     }
 
     create() {
+        console.log('Title scene started')
         const ui = {
             multiplayerButton: createButton("Find a Match", this),
             singleplayerButton: createButton("Single Player", this),
