@@ -8,7 +8,7 @@ export default class GameScene extends Phaser.Scene {
     create(data) {
 
         this.peerConnection = data.peerConnection;
-        this.scene.launch('chat', {peerConnection: this.peerConnection});
+        this.scene.launch('chat-background', {peerConnection: this.peerConnection});
 
         this.add.text(
             this.sys.game.scale.gameSize.width/2,
@@ -57,7 +57,7 @@ export default class GameScene extends Phaser.Scene {
         chatButton.x += chatButton.width/2;
         chatButton.y -= chatButton.height*1.5;
         chatButton.on("pointerup", () => {
-            this.cbhandler();
+            this.chatButtonHandler();
         });
     }
 
@@ -67,8 +67,17 @@ export default class GameScene extends Phaser.Scene {
         this.scene.stop();
         this.scene.start('title');
     }
-    cbhandler() {
+    chatButtonHandler() {
         this.scene.setVisible(false);
-        this.scene.get('chat').show();
+        if(this.scene)
+        if(this.scene.isSleeping('chat-foreground')) {
+            console.log("woke")
+            this.scene.wake('chat-foreground')
+        }
+        else {
+            console.log("not woke")
+            this.scene.launch('chat-foreground');
+        }
+
     }
 }

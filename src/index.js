@@ -1,12 +1,13 @@
 import Phaser from 'phaser';
 import TitleScene from './scenes/title';
 import GameScene from './scenes/game';
-import ChatScene from './scenes/chat';
-
+import ChatBackgroundScene from './scenes/chat/background';
+import ChatForegroundScene from './scenes/chat/foreground';
 
 const titleScene = new TitleScene();
 const gameScene = new GameScene();
-const chatScene = new ChatScene();
+const chatBackgroundScene = new ChatBackgroundScene();
+const chatForegroundScene = new ChatForegroundScene();
 
 const config = {
     type: Phaser.AUTO,
@@ -26,7 +27,8 @@ const game = new Phaser.Game(config);
 
 game.scene.add('title', titleScene);
 game.scene.add('game', gameScene);
-game.scene.add('chat', chatScene);
+game.scene.add('chat-background', chatBackgroundScene);
+game.scene.add('chat-foreground', chatForegroundScene);
 
 
 game.scene.start('title');
