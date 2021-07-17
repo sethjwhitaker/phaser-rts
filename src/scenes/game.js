@@ -3,6 +3,8 @@ import Phaser from 'phaser';
 export default class GameScene extends Phaser.Scene {
     constructor() {
         super({key: 'game'});
+
+        this.lastChange = null;
     }
 
     create(data) {
@@ -10,7 +12,7 @@ export default class GameScene extends Phaser.Scene {
         this.peerConnection = data.peerConnection;
         this.scene.launch('chat-background', {peerConnection: this.peerConnection});
 
-        this.add.text(
+        this.welcomeText = this.add.text(
             this.sys.game.scale.gameSize.width/2,
             this.sys.game.scale.gameSize.height/2, 
             "WELCOME TO GAME " + data.playerName.toUpperCase(), {
@@ -59,6 +61,23 @@ export default class GameScene extends Phaser.Scene {
         chatButton.on("pointerup", () => {
             this.chatButtonHandler();
         });
+    }
+
+    update(time, delta) {
+
+        if(this.lastChange > 10) {
+            this.lastChange = 0;
+            var color = "#";
+            for(var i = 0; i < 6; i++)
+                color += Math.floor(Math.random() * 16).toString(16)
+
+            this.welcomeText.setStyle({
+                color: color
+            })
+        } else {
+            this.lastChange++;
+        }
+        
     }
 
     qbhandler() {

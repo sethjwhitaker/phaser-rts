@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 
-import LobbyConnection from '../websocket';
-import PeerConnection from '../peer_connection';
+import LobbyConnection from '../network/websocket';
+import PeerConnection from '../network/peer_connection';
 
 export default class TitleScene extends Phaser.Scene {
     constructor() {

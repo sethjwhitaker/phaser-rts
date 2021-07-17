@@ -30,5 +30,4 @@ game.scene.add('game', gameScene);
 game.scene.add('chat-background', chatBackgroundScene);
 game.scene.add('chat-foreground', chatForegroundScene);
 
-
 game.scene.start('title');
