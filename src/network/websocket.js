@@ -1,4 +1,4 @@
-const protocol = "wss://";
+const protocol = getProtocol();
 const url = protocol + location.host;
 const matchFoundEvent = new CustomEvent('matchFound', {detail: ""});
 
@@ -86,8 +86,12 @@ export default class LobbyConnection {
         }
     }
 
+}
 
-
+function getProtocol() {
+    if(location.protocol == "https://")
+        return "wss://"
+    return "ws://"
 }
 
 
