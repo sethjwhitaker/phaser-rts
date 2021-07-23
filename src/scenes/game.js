@@ -12,6 +12,20 @@ export default class GameScene extends Phaser.Scene {
         this.peerConnection = data.peerConnection;
         this.scene.launch('chat-background', {peerConnection: this.peerConnection});
 
+        this.hex = this.add.polygon(
+            this.sys.game.scale.gameSize.width/2,
+            this.sys.game.scale.gameSize.height/2, 
+            [
+                -100, 100*Math.sqrt(3),
+                100, 100*Math.sqrt(3),
+                200, 0,
+                100, -100*Math.sqrt(3),
+                -100, -100*Math.sqrt(3),
+                -200, 0
+            ],
+            0xffffff
+        ).setOrigin(0).setStrokeStyle(1, 0xff0000, 1);
+
         this.welcomeText = this.add.text(
             this.sys.game.scale.gameSize.width/2,
             this.sys.game.scale.gameSize.height/2, 
@@ -61,6 +75,8 @@ export default class GameScene extends Phaser.Scene {
         chatButton.on("pointerup", () => {
             this.chatButtonHandler();
         });
+
+
     }
 
     update(time, delta) {

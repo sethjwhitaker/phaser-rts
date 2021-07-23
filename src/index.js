@@ -12,7 +12,6 @@ const chatForegroundScene = new ChatForegroundScene();
 const config = {
     type: Phaser.AUTO,
     scale: {
-        mode: Phaser.Scale.FIT,
         width: 1280,
         height: 720,
     },
