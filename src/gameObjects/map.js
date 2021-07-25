@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
 import Hex from './hex';
+import hexagonMap from '../maps/hexagon_map.json';
+import Perspective from '../util/perspective';
 
 export default class Map extends Phaser.GameObjects.Container {
     constructor(scene) {
@@ -7,42 +9,31 @@ export default class Map extends Phaser.GameObjects.Container {
 
         this.scene = scene;
 
+        this.fillColor = 0x49ba5f;
+        this.strokeColor = 0x000000;
         this.origin = {
             x: this.scene.sys.game.scale.gameSize.width/2,
             y: this.scene.sys.game.scale.gameSize.height/2
         }
-        this.create()
+        this.hexSize = 30;
+        this.createHexagonMap();
     }
 
-    create() {
-        this.add(new Hex(
-                this.scene, 
-                this.origin.x, 
-                this.origin.y,
-                0xffffff,
-                {width: 5, color: 0xaaaaaa, alpha: 1}
-            )
-        );
-        this.add(new Hex(
-            this.scene, 
-            this.origin.x+30, 
-            this.origin.y+Math.sqrt(3)*10,
-            0xffffff,
-            {width: 5, color: 0xaaaaaa, alpha: 1}
-        ))
-        this.add(new Hex(
-            this.scene, 
-            this.origin.x+30, 
-            this.origin.y-Math.sqrt(3)*10,
-            0xffffff,
-            {width: 5, color: 0xaaaaaa, alpha: 1}
-        ))
-        this.add(new Hex(
-            this.scene, 
-            this.origin.x+60, 
-            this.origin.y,
-            0xffffff,
-            {width: 5, color: 0xaaaaaa, alpha: 1}
-        ))
+    createHexagonMap() {
+        var points = hexagonMap.points;
+        points = points.map(point => this.hexSize*point)
+        points = Perspective.isometric2d(points);
+
+        for(var i = 0; i < points.length; i+= 2) {
+            this.add(new Hex(
+                this.scene,
+                this.origin.x+points[i], 
+                this.origin.y+points[i+1],
+                this.hexSize,
+                this.fillColor,
+                {width: 2, color: this.strokeColor, alpha: 1}
+            ))
+        }
+
     }
 }

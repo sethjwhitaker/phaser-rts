@@ -76,13 +76,13 @@ export default class Perspective {
                 0, 0, 1
             ]
         }
-        return multiplyMatrices(rotationMatrix, 3, 3, point, 3, 1);
+        return this.multiplyMatrices(rotationMatrix, 3, 3, point, 3, 1);
     }
 
     static rotatePoints3d(points, axis, angle) {
         const newPoints = []
         for(var i = 0; i < points.length; i+=3) {
-            const newPoint = rotatePoint(
+            const newPoint = this.rotatePoint3d(
                 [points[i+0], points[i+1], points[i+2]],
                 axis, angle
             );
@@ -97,7 +97,7 @@ export default class Perspective {
             0, 1, 0,
             0, 0, 0
         ]
-        return multiplyMatrices(projectionMatrix, 3, 3, point, 3, 1);
+        return this.multiplyMatrices(projectionMatrix, 3, 3, point, 3, 1);
     }
      
     static projectPoints3d(points) {
@@ -129,14 +129,20 @@ export default class Perspective {
                 newPoints.push(z)
             }
         }
+        return newPoints;
     }
 
-    static isometric(points) {
-        return flattenDimension(
-                rotatePoints(
-                    rotatePoints(points, "z", Math.PI/4),
-                    "x", Math.asin(Math.PI/6),
-               )
+    static isometric2d(points) {
+        return this.convertTo2d(
+            this.isometric3d(
+                this.convertTo3d(points)
+            )
         )
+    }
+
+    static isometric3d(points) {
+        points = this.rotatePoints3d(points, "z", Math.PI/4)
+        points = this.rotatePoints3d(points, "x", .8)
+        return points;
     }
 }

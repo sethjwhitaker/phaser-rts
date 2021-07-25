@@ -115,6 +115,7 @@ export default class GameScene extends Phaser.Scene {
             this.welcomeText.setStyle({
                 color: newColor
             })
+
         } else {
             this.lastChange++;
         }

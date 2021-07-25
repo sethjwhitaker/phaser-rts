@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import Perspective from '../util/perspective';
 
 export default class Hex extends Phaser.GameObjects.Polygon {
    /**
@@ -11,18 +12,19 @@ export default class Hex extends Phaser.GameObjects.Polygon {
     * @param {Number} color 
     * @param {Object} border 
     */
-    constructor(scene, x, y, color, border) {
+    constructor(scene, x, y, scale, color, border) {
         color = color ? color : 0xffffff;
+        const points = [
+            -scale, scale*Math.sqrt(3),
+            scale, scale*Math.sqrt(3),
+            2*scale, 0,
+            scale, -scale*Math.sqrt(3),
+            -scale, -scale*Math.sqrt(3),
+            -2*scale, 0
+        ]
 
         super(scene, x, y, 
-            [
-                -10, 10*Math.sqrt(3),
-                10, 10*Math.sqrt(3),
-                20, 0,
-                10, -10*Math.sqrt(3),
-                -10, -10*Math.sqrt(3),
-                -20, 0
-            ], color);
+            Perspective.isometric2d(points), color);
         this.setOrigin(0).setStrokeStyle(border.width, 
                 border.color, border.alpha);
     }
