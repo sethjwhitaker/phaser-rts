@@ -19,7 +19,8 @@ const config = {
         createContainer: true
     },
     parent: document.body,
-    autoCenter: Phaser.Scale.CENTER_BOTH
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+    disableContextMenu: true
 }
 
 const game = new Phaser.Game(config);

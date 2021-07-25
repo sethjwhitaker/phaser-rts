@@ -7,24 +7,19 @@ export default class GameScene extends Phaser.Scene {
         super({key: 'game'});
 
         this.lastChange = null;
+
+
+        this.leftMouseDown = false;
+        this.rightMouseDown = false;
+
+        this.pointerMoveHandler = this.pointerMoveHandler.bind(this);
+
     }
 
     create(data) {
 
         this.peerConnection = data.peerConnection;
         this.scene.launch('chat-background', {peerConnection: this.peerConnection});
-
-        /*this.map = new Phaser.GameObjects.Polygon(this,this.sys.game.scale.gameSize.width/2,
-            this.sys.game.scale.gameSize.height/2, 
-            [
-                -100, 100*Math.sqrt(3),
-                100, 100*Math.sqrt(3),
-                200, 0,
-                100, -100*Math.sqrt(3),
-                -100, -100*Math.sqrt(3),
-                -200, 0
-            ],
-            0xffffff)*/
             
         this.map = new Map(
             this, 
@@ -88,7 +83,7 @@ export default class GameScene extends Phaser.Scene {
             this.chatButtonHandler();
         });
 
-
+        this.input.on("pointermove", this.pointerMoveHandler)
     }
 
     update(time, delta) {
@@ -119,7 +114,15 @@ export default class GameScene extends Phaser.Scene {
         } else {
             this.lastChange++;
         }
-        
+    }
+    pointerMoveHandler(e) {
+        if(e.rightButtonDown()) {
+            const dx = e.position.x-e.prevPosition.x
+            const dy = e.position.y-e.prevPosition.y
+            this.map.setX(this.map.x + dx)
+            this.map.setY(this.map.y + dy)
+        } else if(e.isDown) {
+        }
     }
 
     qbhandler() {
