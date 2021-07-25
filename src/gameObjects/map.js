@@ -22,8 +22,10 @@ export default class Map extends Phaser.GameObjects.Container {
             y: this.scene.sys.game.scale.gameSize.height/2
         }
         /* Number of coordinates per pixel */
-        this.hexSize = 30;
+        this.hexSize = 50;
         this.createHexagonMap();
+
+        this.mapToScreenCoordinates = this.mapToScreenCoordinates.bind(this);
     }
 
     /**
@@ -48,5 +50,19 @@ export default class Map extends Phaser.GameObjects.Container {
             ))
         }
 
+    }
+
+    /**
+     * Converts coordinates from map space to screen space
+     * 
+     * @param {Number} x 
+     * @param {Number} y 
+     * @param {Number} z 
+     * @returns {Object} The {x, y} position in screen space
+     */
+    mapToScreenCoordinates(x, y, z) {
+        z = z ? z : 0;
+        var result = Perspective.convertTo2d(Perspective.isometric3d([x, y, z]));
+        return {x: this.origin.x + result[0], y: this.origin.y + result[1]};
     }
 }
