@@ -3,6 +3,12 @@ import Hex from './hex';
 import hexagonMap from '../maps/hexagon_map.json';
 import Perspective from '../util/perspective';
 
+/**
+ * A container for all the hexes in the game. Handles loading,
+ * layout, and perspective of the tiles.
+ * 
+ * @author Seth Whitaker
+ */
 export default class Map extends Phaser.GameObjects.Container {
     constructor(scene) {
         super(scene);
@@ -15,10 +21,17 @@ export default class Map extends Phaser.GameObjects.Container {
             x: this.scene.sys.game.scale.gameSize.width/2,
             y: this.scene.sys.game.scale.gameSize.height/2
         }
+        /* Number of coordinates per pixel */
         this.hexSize = 30;
         this.createHexagonMap();
     }
 
+    /**
+     * Loads the hex coordinates from the hexagonMap JSON file.
+     * The coordinates of the hexagons should be based around a hexagon
+     * size where the flat edge is sqrt(3) from the center, and the corner is 
+     * 2 away from the center.
+     */
     createHexagonMap() {
         var points = hexagonMap.points;
         points = points.map(point => this.hexSize*point)

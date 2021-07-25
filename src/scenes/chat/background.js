@@ -1,5 +1,10 @@
 import Phaser from 'phaser';
 
+/**
+ * Handles sending and receiveing chats (runs in the background)
+ * 
+ * @author Seth Whitaker
+ */
 export default class ChatBackground extends Phaser.Scene {
     constructor() {
         super({key: 'chat-background'});
@@ -13,6 +18,9 @@ export default class ChatBackground extends Phaser.Scene {
         this.chats = [];
     }
 
+    /**
+     * @inheritdoc
+     */
     create(data) {
         console.log("Chat Background Loaded");
 
@@ -24,10 +32,20 @@ export default class ChatBackground extends Phaser.Scene {
         })
     }
 
+    /**
+     * Returns the chats
+     * 
+     * @returns {Object[]} The chats array
+     */
     getChats() {
         return this.chats;
     }
 
+    /**
+     * Handles chat received event
+     * 
+     * @param {Object} e Chat event
+     */
     receiveChat(e) {
         console.log(this.chats)
         const newChat = {
@@ -42,6 +60,11 @@ export default class ChatBackground extends Phaser.Scene {
         }
     }
 
+    /**
+     * Sends a chat to the connected peer
+     * 
+     * @param {String} text The chat message to send
+     */
     sendChat(text) {
         if(this.peerConnection) 
             this.peerConnection.sendChat(text); // TODO: Reconfigure to use user ids in the future

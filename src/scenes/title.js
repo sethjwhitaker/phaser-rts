@@ -1,13 +1,21 @@
 import Phaser from 'phaser';
-
 import LobbyConnection from '../network/websocket';
 import PeerConnection from '../network/peer_connection';
 
+/** 
+ * The landing screen for the game. Handles initiating connections
+ * and starting the game.
+ * 
+ * @author Seth Whitaker
+ */
 export default class TitleScene extends Phaser.Scene {
     constructor() {
         super({key: 'title'});
     }
 
+    /**
+     * @inheritdoc
+     */
     create() {
         console.log('Title scene started')
         const ui = {
@@ -61,9 +69,9 @@ export default class TitleScene extends Phaser.Scene {
 }
 
 /**
- * Handles multiplayer button press events.
+ * Handles multiplayer button press events
  * 
- * @param {Object} ui Object containing the ui elements on the title screen.
+ * @param {Object} ui The interactive elements of the ui
  */
 function mpbuttonEventHandler(ui) {
     console.log("multiplayer button pressed");
@@ -72,6 +80,12 @@ function mpbuttonEventHandler(ui) {
     LobbyConnection.joinLobby(nameEl.value);
 }
 
+/**
+ * Handles singleplayer button press events
+ * 
+ * @param {Object} ui The interactive elements of the ui
+ * @param {TitleScene} scene The title scene
+ */
 function spbuttonEventHandler(ui, scene) {
     console.log("singleplayer button pressed");
     const nameEl = prepareGameStart(ui);
@@ -79,6 +93,11 @@ function spbuttonEventHandler(ui, scene) {
     scene.scene.start('game', {numPlayers: 1, playerName: nameEl.value});
 }
 
+/**
+ * Handles cancel button press events
+ * 
+ * @param {Object} ui The interactive elements of the ui
+ */
 function cbEventHandler(ui) {
     console.log("cancel button pressed");
     toggleAll(ui)
@@ -86,6 +105,13 @@ function cbEventHandler(ui) {
     LobbyConnection.leaveLobby();
 }
 
+/**
+ * Creates an interactive button
+ * 
+ * @param {String} text The text of the button
+ * @param {TitleScene} scene The scene to add this button to
+ * @returns {Object} The created Button
+ */
 function createButton(text, scene) {
     return scene.add.text(
         scene.sys.game.scale.gameSize.width/2,
@@ -101,6 +127,12 @@ function createButton(text, scene) {
     ).setOrigin(.5).setInteractive();
 }
 
+/**
+ * Creates an interactive input element
+ * 
+ * @param {TitleScene} scene The scene to add this input to
+ * @returns {Object} The created Input element
+ */
 function createInput(scene) {
     const input = document.createElement("input");
     input.setAttribute('type', 'text');
@@ -112,12 +144,22 @@ function createInput(scene) {
     ).setInteractive().setOrigin(.5);
 }
 
+/**
+ * Switches the display state of all elements in the ui
+ * 
+ * @param {Object} ui The interactive elements of the ui
+ */
 function toggleAll(ui) {
     for(const el in ui) {
         toggleUI(ui[el]);
     }
 }
 
+/**
+ * Switches the display state of an element
+ * 
+ * @param {Object} element 
+ */
 function toggleUI(element) {
     if(element.active) {
         element.setActive(false).setVisible(false);
@@ -126,6 +168,12 @@ function toggleUI(element) {
     }
 }
 
+/**
+ * Prepares the game for starting
+ * 
+ * @param {Object} ui The interactive elements of the ui
+ * @returns {Object} The input element
+ */
 function prepareGameStart(ui) {
     const nameEl = ui.input.node;
     if(nameEl.value.length === 0) {

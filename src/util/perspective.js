@@ -79,6 +79,20 @@ export default class Perspective {
         return this.multiplyMatrices(rotationMatrix, 3, 3, point, 3, 1);
     }
 
+    /**
+     * Rotates an array of 3d points about the specified axis with origin
+     * at (0,0,0).
+     * 
+     * Note: if a rotation about an axis through a point other than
+     * the origin is required, the points should be translated first,
+     * then rotated, then untranslated.
+     * 
+     * @param {Number[]} points An array containing groups of x, y, z coordinates
+     * (the length should be divisible by 3)
+     * @param {String} axis The axis to roate by
+     * @param {Number} angle The angle in Radians to rotate by
+     * @returns {Number[]} The rotated points.
+     */
     static rotatePoints3d(points, axis, angle) {
         const newPoints = []
         for(var i = 0; i < points.length; i+=3) {
@@ -109,6 +123,13 @@ export default class Perspective {
         return newPoints;
     }
 
+    /**
+     * Removes z coordinates from points array
+     * 
+     * @param {Number[]} points An array containing groups of x, y, z coordinates
+     * (the length should be divisible by 3)
+     * @returns {Number[]} The points with every 3rd element removed
+     */
     static convertTo2d(points) {
         const newPoints = [];
         for(var i = 0; i < points.length; i++) {
@@ -119,6 +140,14 @@ export default class Perspective {
         return newPoints;
     }
 
+    /**
+     * Inserts z after every second element
+     * 
+     * @param {Number[]} points An array containing groups of x, y coordinates
+     * (the length should be divisible by 2)
+     * @param {Number} z The element to insert repeatedly
+     * @returns {Number[]} The modified array
+     */
     static convertTo3d(points, z) {
         if(!z) z = 0;
 
@@ -132,6 +161,13 @@ export default class Perspective {
         return newPoints;
     }
 
+    /**
+     * Converts points to an isometric perspective
+     * 
+     * @param {Number[]} points An array containing groups of x, y coordinates
+     * (the length should be divisible by 2)
+     * @returns {Number[]} The modified 2d points
+     */
     static isometric2d(points) {
         return this.convertTo2d(
             this.isometric3d(
@@ -140,6 +176,13 @@ export default class Perspective {
         )
     }
 
+    /**
+     * Converts points to an isometric perspective
+     * 
+     * @param {Number[]} points An array containing groups of x, y, z coordinates
+     * (the length should be divisible by 3)
+     * @returns {Number[]} The modified 3d points
+     */
     static isometric3d(points) {
         points = this.rotatePoints3d(points, "z", Math.PI/4)
         points = this.rotatePoints3d(points, "x", .8)
