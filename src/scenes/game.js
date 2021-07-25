@@ -1,6 +1,5 @@
 import Phaser from 'phaser';
 import Map from '../gameObjects/map';
-import Hex from '../gameObjects/hex';
 
 export default class GameScene extends Phaser.Scene {
     constructor() {
@@ -8,14 +7,12 @@ export default class GameScene extends Phaser.Scene {
 
         this.lastChange = null;
 
-
-        this.leftMouseDown = false;
-        this.rightMouseDown = false;
-
         this.pointerMoveHandler = this.pointerMoveHandler.bind(this);
-
     }
 
+    /**
+     * @inheritdoc
+     */
     create(data) {
 
         this.peerConnection = data.peerConnection;
@@ -27,9 +24,7 @@ export default class GameScene extends Phaser.Scene {
             this.sys.game.scale.gameSize.height/2,
             0xffffff,
             {width: 5, color: 0xaaaaaa, alpha: 1}
-            );    /*new Hex(this, [this.sys.game.scale.gameSize.width/2,
-                this.sys.game.scale.gameSize.height/2], '#ffffff', null);*/
-
+        ); 
 
         this.add.existing(this.map);
 
@@ -84,8 +79,12 @@ export default class GameScene extends Phaser.Scene {
         });
 
         this.input.on("pointermove", this.pointerMoveHandler)
+        this.input.on("wheel", this.mouseWheelHandler)
     }
 
+    /**
+     * @inheritdoc
+     */
     update(time, delta) {
 
         if(this.lastChange > 10) {
@@ -115,6 +114,11 @@ export default class GameScene extends Phaser.Scene {
             this.lastChange++;
         }
     }
+
+    /**
+     * 
+     * @param {*} e 
+     */
     pointerMoveHandler(e) {
         if(e.rightButtonDown()) {
             const dx = e.position.x-e.prevPosition.x
@@ -125,12 +129,29 @@ export default class GameScene extends Phaser.Scene {
         }
     }
 
+    /**
+     * 
+     * @param {*} e
+     */
+    mouseWheelHandler(e) {
+        const zoomIntensity = .001;
+        const zoom = Math.max(0.5,Math.min(3,this.cameras.main.zoom-zoomIntensity*e.deltaY))
+        this.cameras.main.setZoom(zoom);
+    }
+
+    /**
+     * 
+     */
     qbhandler() {
         console.log('quit pressed')
         this.scene.stop('chat');
         this.scene.stop();
         this.scene.start('title');
     }
+
+    /**
+     * 
+     */
     chatButtonHandler() {
         this.scene.setVisible(false);
         if(this.scene)
