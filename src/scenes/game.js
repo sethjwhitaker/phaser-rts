@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import Map from '../gameObjects/map';
+import Unit from '../gameObjects/unit';
 
 /**
  * The main scene of the game
@@ -83,6 +84,52 @@ export default class GameScene extends Phaser.Scene {
             this.chatButtonHandler();
         });
 
+        const center = {
+            x: 0,
+            y:0 
+        }
+        this.add.existing(new Unit(this, {
+                x: center.x+40,
+                y: center.y+45
+            }, 5, 0xffffff ))
+        this.add.existing(new Unit(this, {
+                x: center.x,
+                y: center.y+60
+            }, 5, 0xffffff ))
+        this.add.existing(new Unit(this, {
+                x: center.x-40,
+                y: center.y+45
+            }, 5, 0xffffff ))
+
+        this.add.existing(new Unit(this, {
+                x: center.x+40,
+                y: center.y-45
+            }, 5, 0xffffff ))
+        this.add.existing(new Unit(this, {
+                x: center.x,
+                y: center.y-60
+            }, 5, 0xffffff ))
+        this.add.existing(new Unit(this, {
+                x: center.x-40,
+                y: center.y-45
+            }, 5, 0xffffff ))
+        this.add.existing(new Unit(this, {
+                x: center.x-20,
+                y: center.y
+            }, 5, 0xffffff ))
+        this.add.existing(new Unit(this, {
+                x: center.x+20,
+                y: center.y
+            }, 5, 0xffffff ))
+        this.add.existing(new Unit(this, {
+                x: center.x-60,
+                y: center.y
+            }, 5, 0xffffff ))
+        this.add.existing(new Unit(this, {
+                x: center.x+60,
+                y: center.y
+            }, 5, 0xffffff ))
+
         this.input.on("pointermove", this.pointerMoveHandler)
         this.input.on("wheel", this.mouseWheelHandler)
     }
@@ -127,10 +174,14 @@ export default class GameScene extends Phaser.Scene {
      */
     pointerMoveHandler(e) {
         if(e.rightButtonDown()) {
-            const dx = e.position.x-e.prevPosition.x
-            const dy = e.position.y-e.prevPosition.y
-            this.map.setX(this.map.x + dx)
-            this.map.setY(this.map.y + dy)
+            const current = this.cameras.main.getWorldPoint(e.position.x, e.position.y);
+            const previous = this.cameras.main.getWorldPoint(e.prevPosition.x, e.prevPosition.y)
+            const dx = current.x-previous.x
+            const dy = current.y-previous.y
+            this.cameras.main.setScroll(
+                this.cameras.main.scrollX - dx, 
+                this.cameras.main.scrollY - dy
+            )
         } else if(e.isDown) {
         }
     }
