@@ -12,7 +12,6 @@ const chatForegroundScene = new ChatForegroundScene();
 const config = {
     type: Phaser.AUTO,
     scale: {
-        mode: Phaser.Scale.FIT,
         width: 1280,
         height: 720,
     },
@@ -20,7 +19,8 @@ const config = {
         createContainer: true
     },
     parent: document.body,
-    autoCenter: Phaser.Scale.CENTER_BOTH
+    autoCenter: Phaser.Scale.CENTER_BOTH,
+    disableContextMenu: true
 }
 
 const game = new Phaser.Game(config);
