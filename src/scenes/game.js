@@ -1,6 +1,11 @@
 import Phaser from 'phaser';
 import Map from '../gameObjects/map';
 
+/**
+ * The main scene of the game
+ * 
+ * @author Seth Whitaker
+ */
 export default class GameScene extends Phaser.Scene {
     constructor() {
         super({key: 'game'});
@@ -116,8 +121,9 @@ export default class GameScene extends Phaser.Scene {
     }
 
     /**
+     * Handles the mouse moving
      * 
-     * @param {*} e 
+     * @param {Object} e The event object
      */
     pointerMoveHandler(e) {
         if(e.rightButtonDown()) {
@@ -130,8 +136,9 @@ export default class GameScene extends Phaser.Scene {
     }
 
     /**
+     * Handles the mouse wheel scrolling
      * 
-     * @param {*} e
+     * @param {Object} e The event object
      */
     mouseWheelHandler(e) {
         const zoomIntensity = .001;
@@ -140,7 +147,7 @@ export default class GameScene extends Phaser.Scene {
     }
 
     /**
-     * 
+     * Handles the quit button being pressed
      */
     qbhandler() {
         console.log('quit pressed')
@@ -150,7 +157,7 @@ export default class GameScene extends Phaser.Scene {
     }
 
     /**
-     * 
+     * Handles the chat button being pressed
      */
     chatButtonHandler() {
         this.scene.setVisible(false);

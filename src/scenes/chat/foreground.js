@@ -1,5 +1,10 @@
 import Phaser from 'phaser';
 
+/**
+ * The display scene for the chats
+ * 
+ * @author Seth Whitaker
+ */
 export default class ChatForeground extends Phaser.Scene {
     constructor() {
         super({key: 'chat-foreground'});
@@ -11,6 +16,9 @@ export default class ChatForeground extends Phaser.Scene {
         this.chatTextObjs = [];
     }
 
+    /**
+     * @inheritdoc
+     */
     create(data) {
         console.log("Chat Foreground Loaded");
 
@@ -56,17 +64,28 @@ export default class ChatForeground extends Phaser.Scene {
         this.loadChats();
     }
 
+    /**
+     * Handles the back button being pressed
+     */
     backButtonHandler() {
         console.log("back button pressed")
         this.scene.sleep().setVisible(true, 'game')
     }
 
+    /**
+     * Gets the chats from the background scene
+     */
     loadChats() {
         this.scene.get('chat-background').getChats().forEach(chat => {
             this.addChat(chat);
         })
     }
 
+    /**
+     * Tells background to send chat and displays it
+     * 
+     * @param {String} chat 
+     */
     addChat(chat) {
         console.log("chat is being added")
         const x = !chat.myChat ? this.sys.game.scale.gameSize.width/4 : 

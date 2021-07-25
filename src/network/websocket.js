@@ -2,6 +2,11 @@ const protocol = getProtocol();
 const url = protocol + location.host;
 const matchFoundEvent = new CustomEvent('matchFound', {detail: ""});
 
+/**
+ * Handles websocket connection to matchmaking server
+ * 
+ * @author Seth Whitaker
+ */
 export default class LobbyConnection {
 
     static client = null;
@@ -9,6 +14,11 @@ export default class LobbyConnection {
     static timeSincePing = null;
     static disconnectTimer = null;
     
+    /**
+     * Opens up a connection to the server
+     * 
+     * @param {String} playerName 
+     */
     static joinLobby(playerName) {
         // TODO: handle possible errors such as calling join
         // lobby when a client instance already exists
@@ -51,16 +61,27 @@ export default class LobbyConnection {
         }
     }
 
+    /**
+     * Closes the connection to the server.
+     */
     static leaveLobby() {
         this.client.close();
         this.client = null;
     }
 
+    /**
+     * Requests the server to find a match
+     * 
+     * @param {*} id
+     */
     static waitForMatch(id) {
         this.client.send("match " + id);
         console.log("match message sent " + id);
     }
 
+    /**
+     * Checks to make sure client is still connected to server
+     */
     static pingReceived() {
         this.clearTimers();
 
@@ -74,6 +95,9 @@ export default class LobbyConnection {
         }, 10000)
     }
 
+    /**
+     * Cleans up ping timers
+     */
     static clearTimers() {
         if(this.timeSincePing !== null) {
             clearTimeout(this.timeSincePing);
@@ -88,6 +112,11 @@ export default class LobbyConnection {
 
 }
 
+/**
+ * If http connection was secure, use secure ws connection
+ * 
+ * @returns {String} The protocol to use for connecting to server
+ */
 function getProtocol() {
     if(location.protocol == "https://")
         return "wss://"
