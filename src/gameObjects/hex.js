@@ -33,4 +33,18 @@ export default class Hex extends Phaser.GameObjects.Polygon {
         /* Center origin and set stroke style */
         this.setOrigin(0).setStrokeStyle(border.width, border.color, border.alpha);
     }
+
+    encapsulates(point) {
+        // Add the center point to each of the points of this hex before checking
+        // maybe that will work, but who knows. Either way, it's getting late, and
+        // I might not check on this code again till next week or so
+        const newPoints = this.geom.points.map(point => {
+            const newPoint = this.scene.map.mapToScreenCoordinates(point.x, point.y)
+            return [newPoint.x, newPoint.y]
+        })
+        const g = new Phaser.Geom.Polygon(newPoints);
+        return g.contains(point.x, point.y);
+    }
+
+    
 }

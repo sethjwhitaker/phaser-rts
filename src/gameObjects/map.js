@@ -52,6 +52,10 @@ export default class Map extends Phaser.GameObjects.Container {
 
     }
 
+    getOrigin() {
+        return this.origin;
+    }
+
     /**
      * Converts coordinates from map space to screen space
      * 
@@ -64,5 +68,14 @@ export default class Map extends Phaser.GameObjects.Container {
         z = z ? z : 0;
         var result = Perspective.convertTo2d(Perspective.isometric3d([x, y, z]));
         return {x: this.origin.x + result[0], y: this.origin.y + result[1]};
+    }
+
+    getHexAt(location) {
+        const hexes = this.getAll();
+        for(var i = 0; i < hexes.length; i++) {
+            console.log(hexes[i].geom.points)
+            if(hexes[i].encapsulates(location)) return hexes[i]
+        }
+        return null;
     }
 }

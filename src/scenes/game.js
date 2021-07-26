@@ -13,7 +13,12 @@ export default class GameScene extends Phaser.Scene {
 
         this.lastChange = null;
 
+        this.selectRect = null;
+        this.selected = null;
+
         this.pointerMoveHandler = this.pointerMoveHandler.bind(this);
+        this.pointerUpHandler = this.pointerUpHandler.bind(this);
+        this.finishSelect = this.finishSelect.bind(this);
     }
 
     /**
@@ -100,7 +105,6 @@ export default class GameScene extends Phaser.Scene {
                 x: center.x-40,
                 y: center.y+45
             }, 5, 0xffffff ))
-
         this.add.existing(new Unit(this, {
                 x: center.x+40,
                 y: center.y-45
@@ -130,7 +134,9 @@ export default class GameScene extends Phaser.Scene {
                 y: center.y
             }, 5, 0xffffff ))
 
+        //this.input.on("pointerdown", this.pointerDownHandler)
         this.input.on("pointermove", this.pointerMoveHandler)
+        this.input.on("pointerup", this.pointerUpHandler)
         this.input.on("wheel", this.mouseWheelHandler)
     }
 
@@ -183,6 +189,26 @@ export default class GameScene extends Phaser.Scene {
                 this.cameras.main.scrollY - dy
             )
         } else if(e.isDown) {
+            if(this.selectRect) {
+                this.selectRect.setSize(e.position.x-e.downX,e.position.y-e.downY)
+            } else {
+                //console.log(e);
+                this.selected = null;
+                this.selectRect = this.add.rectangle(
+                    e.downX, e.downY, e.position.x-e.downX, e.position.y-e.downY,
+                    0x555555, .3).setStrokeStyle(1, 0x000000, 1)
+            }
+        }
+    }
+
+    pointerUpHandler(e) {
+        if(this.selectRect) {
+            this.finishSelect(e)
+        } else {
+            if(this.selected) {
+                console.log(this.map.getHexAt(e.position));
+                this.selected = null;
+            }
         }
     }
 
@@ -195,6 +221,27 @@ export default class GameScene extends Phaser.Scene {
         const zoomIntensity = .001;
         const zoom = Math.max(0.5,Math.min(3,this.cameras.main.zoom-zoomIntensity*e.deltaY))
         this.cameras.main.setZoom(zoom);
+    }
+
+    finishSelect(e) {
+        const shape = {
+            x: this.selectRect.x,
+            y: this.selectRect.y,
+            width: this.selectRect.width,
+            height: this.selectRect.height
+        }
+
+        this.selected = this.children.getChildren().filter(object => {
+            if(object.selectable &&
+                ((object.x >= shape.x && object.x <= shape.x+shape.width) ||
+                (object.x <=shape.x && object.x >= shape.x+shape.width)) &&
+                ((object.y >= shape.y && object.y <= shape.y+shape.height) ||
+                (object.y <=shape.y && object.y >= shape.y+shape.height))
+            ) return true;
+        })
+
+        this.selectRect.destroy()
+        this.selectRect = null;
     }
 
     /**
