@@ -57,6 +57,11 @@ export default class Unit extends Phaser.GameObjects.Container {
         this.hex = null;
     }
 
+    /**
+     * Maintains a reference to the hex this unit belongs to
+     * 
+     * @param {Object} hex 
+     */
     addToHex(hex) {
         if(this.hex && this.hex.active)
             this.hex.removeUnit(this);

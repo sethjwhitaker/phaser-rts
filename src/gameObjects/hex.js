@@ -37,6 +37,7 @@ export default class Hex extends Phaser.GameObjects.Polygon {
         this.addUnit = this.addUnit.bind(this);
         this.addUnits = this.addUnits.bind(this);
 
+
         this.unitSlots = Perspective.isometric2d([
             40, 45,
             0, 60,
@@ -52,6 +53,12 @@ export default class Hex extends Phaser.GameObjects.Polygon {
         this.units = [];
     }
 
+    /**
+     * Returns whether a point is within the bounds of this hex.
+     * 
+     * @param {Object} point The {x, y} point to check
+     * @returns Whether this hex contains this point
+     */
     encapsulates(point) {
         // Add the center point of each hexagon IN MAP COORDINATES to the points 
         // before converting to screen coordinates
@@ -64,11 +71,18 @@ export default class Hex extends Phaser.GameObjects.Polygon {
         return g.contains(point.x, point.y);
     }
 
+    /**
+     * Adds a unit to this hex (mainly used for positioning)
+     * 
+     * @param {Object} unit The unit to add
+     */
     addUnit(unit) {
         if(this.units.length >= 10) {
-            return null;
+            this.scene.map.getAdjacentHexes(this)[0].addUnit(unit);
+            return;
         }
 
+        console.log(this.units.length)
         this.units.push(unit);
         unit.addToHex(this);
 
@@ -76,10 +90,22 @@ export default class Hex extends Phaser.GameObjects.Polygon {
         unit.setPosition(this.x+this.unitSlots[index], this.y+this.unitSlots[index+1])
     }
 
+    /**
+     * Adds multiple units to this hex
+     * 
+     * @param {Object[]} units The units to add
+     */
     addUnits(units) {
-        units.forEach(unit => this.addUnit(unit))
+        units.forEach(unit => {
+            this.addUnit(unit)
+        })
     }
 
+    /**
+     * Removes a unit from this hex
+     * 
+     * @param {Object} unit The unit to remove
+     */
     removeUnit(unit) {
         for(var i = 0; i < this.units.length; i++) {
             if(this.units[i] === unit) {

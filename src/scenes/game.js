@@ -81,7 +81,7 @@ export default class GameScene extends Phaser.Scene {
             x: 0,
             y:0 
         }
-        for(var i = 0; i < 10; i++) {
+        for(var i = 0; i < 11; i++) {
             const unit = this.add.existing(new Unit(this, {
                     x: center.x,
                     y:center.y
@@ -89,46 +89,6 @@ export default class GameScene extends Phaser.Scene {
             ))
             this.map.getFirst().addUnit(unit)
         }
-        /*this.add.existing(new Unit(this, {
-                x: center.x+40,
-                y: center.y+45
-            }, 5, 0xffffff ))
-        this.add.existing(new Unit(this, {
-                x: center.x,
-                y: center.y+60
-            }, 5, 0xffffff ))
-        this.add.existing(new Unit(this, {
-                x: center.x-40,
-                y: center.y+45
-            }, 5, 0xffffff ))
-        this.add.existing(new Unit(this, {
-                x: center.x+40,
-                y: center.y-45
-            }, 5, 0xffffff ))
-        this.add.existing(new Unit(this, {
-                x: center.x,
-                y: center.y-60
-            }, 5, 0xffffff ))
-        this.add.existing(new Unit(this, {
-                x: center.x-40,
-                y: center.y-45
-            }, 5, 0xffffff ))
-        this.add.existing(new Unit(this, {
-                x: center.x-20,
-                y: center.y
-            }, 5, 0xffffff ))
-        this.add.existing(new Unit(this, {
-                x: center.x+20,
-                y: center.y
-            }, 5, 0xffffff ))
-        this.add.existing(new Unit(this, {
-                x: center.x-60,
-                y: center.y
-            }, 5, 0xffffff ))
-        this.add.existing(new Unit(this, {
-                x: center.x+60,
-                y: center.y
-            }, 5, 0xffffff ))*/
 
         //this.input.on("pointerdown", this.pointerDownHandler)
         this.input.on("pointermove", this.pointerMoveHandler)
@@ -185,6 +145,11 @@ export default class GameScene extends Phaser.Scene {
         }
     }
 
+    /**
+     * Handles mouse click up events
+     * 
+     * @param {Object} e The event object
+     */
     pointerUpHandler(e) {
         console.log("pointer up")
         if(this.selectRect && this.selectRect.active) {
@@ -211,6 +176,12 @@ export default class GameScene extends Phaser.Scene {
         this.cameras.main.setZoom(zoom);
     }
 
+    /**
+     * Adds all selectable objects that are within the bounds of the selectRect
+     * to the selected array. Destroys the selectRect after.
+     * 
+     * @param {Object} e The event object
+     */
     finishSelect(e) {
         const shape = {
             x: this.selectRect.x,
