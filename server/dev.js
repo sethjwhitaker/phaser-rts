@@ -1,6 +1,9 @@
 import express from 'express';
 import { Server } from 'ws';
 import path from 'path';
+import webpackConfig from '../webpack.dev.js';
+import webpack from 'webpack';
+import webpackDevMiddleware from 'webpack-dev-middleware';
 
 /**
  * A dev version of the websocket server that handles
@@ -12,6 +15,15 @@ import path from 'path';
 /* Open up a connection on port 80 or specified port */
 const port = process.env.PORT || 80;
 const app = express();
+
+/* Hot reloading for dev */
+// TODO: Make dev version separate from prod version
+const compiler = webpack(webpackConfig);
+app.use(
+    webpackDevMiddleware(compiler, {
+        publicPath: webpackConfig.output.publicPath
+    })
+);
 
 /* Serve the files in the dist/ folder */
 app.use(express.static(path.join(__dirname, '../dist')));
