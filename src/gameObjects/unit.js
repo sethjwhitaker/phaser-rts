@@ -53,5 +53,13 @@ export default class Unit extends Phaser.GameObjects.Container {
             .setStrokeStyle(1, 0x000000, 1)
             .setClosePath(true)
         )
+
+        this.hex = null;
+    }
+
+    addToHex(hex) {
+        if(this.hex && this.hex.active)
+            this.hex.removeUnit(this);
+        this.hex = hex;
     }
 }

@@ -49,7 +49,6 @@ export default class Map extends Phaser.GameObjects.Container {
                 {width: 2, color: this.strokeColor, alpha: 1}
             ))
         }
-
     }
 
     getOrigin() {
@@ -73,7 +72,6 @@ export default class Map extends Phaser.GameObjects.Container {
     getHexAt(location) {
         const hexes = this.getAll();
         for(var i = 0; i < hexes.length; i++) {
-            console.log(hexes[i].geom.points)
             if(hexes[i].encapsulates(location)) return hexes[i]
         }
         return null;
