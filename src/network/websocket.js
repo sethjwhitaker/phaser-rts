@@ -118,6 +118,7 @@ export default class LobbyConnection {
  * @returns {String} The protocol to use for connecting to server
  */
 function getProtocol() {
+    console.log(location.protocol)
     if(location.protocol == "https://")
         return "wss://"
     return "ws://"
