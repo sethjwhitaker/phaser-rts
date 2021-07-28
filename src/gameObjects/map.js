@@ -49,7 +49,15 @@ export default class Map extends Phaser.GameObjects.Container {
                 {width: 2, color: this.strokeColor, alpha: 1}
             ))
         }
+    }
 
+    /**
+     * Returns the origin of the map
+     * 
+     * @returns The origin
+     */
+    getOrigin() {
+        return this.origin;
     }
 
     /**
@@ -64,5 +72,41 @@ export default class Map extends Phaser.GameObjects.Container {
         z = z ? z : 0;
         var result = Perspective.convertTo2d(Perspective.isometric3d([x, y, z]));
         return {x: this.origin.x + result[0], y: this.origin.y + result[1]};
+    }
+
+    /**
+     * Returns a hex at the specified location
+     * 
+     * @param {Object} location The {x, y} location of the hex to return
+     * @returns The hex at location
+     */
+    getHexAt(location) {
+        const hexes = this.getAll();
+        for(var i = 0; i < hexes.length; i++) {
+            if(hexes[i].encapsulates(location)) return hexes[i]
+        }
+        return null;
+    }
+
+    /**
+     * Gets the hexes before and after specified hex in the 
+     * hexes array
+     * 
+     * @param {Object} hex 
+     * @returns The hexes to the left and right in the hexes array
+     */
+    getAdjacentHexes(hex) {
+        const hexes = this.getAll();
+        for(var i = 0; i < hexes.length; i++) {
+            if(hexes[i] === hex) {
+                const left = i === 0 
+                    ? hexes[hexes.length-1]
+                    : hexes[i-1]
+                const right = i === hexes.length-1
+                    ? hexes[0]
+                    : hexes[i+1]
+                return [left, right];
+            }
+        }
     }
 }

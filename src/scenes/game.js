@@ -13,7 +13,12 @@ export default class GameScene extends Phaser.Scene {
 
         this.lastChange = null;
 
+        this.selectRect = null;
+        this.selected = null;
+
         this.pointerMoveHandler = this.pointerMoveHandler.bind(this);
+        this.pointerUpHandler = this.pointerUpHandler.bind(this);
+        this.finishSelect = this.finishSelect.bind(this);
     }
 
     /**
@@ -33,18 +38,6 @@ export default class GameScene extends Phaser.Scene {
         ); 
 
         this.add.existing(this.map);
-
-        this.welcomeText = this.add.text(
-            this.sys.game.scale.gameSize.width/2,
-            this.sys.game.scale.gameSize.height/2, 
-            "WELCOME TO GAME " + data.playerName.toUpperCase(), {
-                color: "#ffffff",
-                padding: {
-                    x: 10,
-                    y: 10
-                }
-            }
-        ).setOrigin(.5);
 
         const quitButton = this.add.text(
             0,
@@ -88,49 +81,18 @@ export default class GameScene extends Phaser.Scene {
             x: 0,
             y:0 
         }
-        this.add.existing(new Unit(this, {
-                x: center.x+40,
-                y: center.y+45
-            }, 5, 0xffffff ))
-        this.add.existing(new Unit(this, {
-                x: center.x,
-                y: center.y+60
-            }, 5, 0xffffff ))
-        this.add.existing(new Unit(this, {
-                x: center.x-40,
-                y: center.y+45
-            }, 5, 0xffffff ))
+        for(var i = 0; i < 11; i++) {
+            const unit = this.add.existing(new Unit(this, {
+                    x: center.x,
+                    y:center.y
+                }, 5, 0xffffff
+            ))
+            this.map.getFirst().addUnit(unit)
+        }
 
-        this.add.existing(new Unit(this, {
-                x: center.x+40,
-                y: center.y-45
-            }, 5, 0xffffff ))
-        this.add.existing(new Unit(this, {
-                x: center.x,
-                y: center.y-60
-            }, 5, 0xffffff ))
-        this.add.existing(new Unit(this, {
-                x: center.x-40,
-                y: center.y-45
-            }, 5, 0xffffff ))
-        this.add.existing(new Unit(this, {
-                x: center.x-20,
-                y: center.y
-            }, 5, 0xffffff ))
-        this.add.existing(new Unit(this, {
-                x: center.x+20,
-                y: center.y
-            }, 5, 0xffffff ))
-        this.add.existing(new Unit(this, {
-                x: center.x-60,
-                y: center.y
-            }, 5, 0xffffff ))
-        this.add.existing(new Unit(this, {
-                x: center.x+60,
-                y: center.y
-            }, 5, 0xffffff ))
-
+        //this.input.on("pointerdown", this.pointerDownHandler)
         this.input.on("pointermove", this.pointerMoveHandler)
+        this.input.on("pointerup", this.pointerUpHandler)
         this.input.on("wheel", this.mouseWheelHandler)
     }
 
@@ -141,26 +103,6 @@ export default class GameScene extends Phaser.Scene {
 
         if(this.lastChange > 10) {
             this.lastChange = 0;
-            var color = this.welcomeText.style.color;
-            var newColor = "#"
-            for(var i = 1; i < 7; i+=2) {
-                var num = parseInt(color.substr(i, 2), 16);
-                const rand = Math.random()
-                if(rand>.5) {
-                    num = Math.min(255,num+10);
-                } else {
-                    num = Math.max(0, num-10)
-                }
-                var newString = num.toString(16);
-                if(newString.length < 2) {
-                    newString = "0" + newString;
-                }
-                newColor += newString;
-            }
-
-            this.welcomeText.setStyle({
-                color: newColor
-            })
 
         } else {
             this.lastChange++;
@@ -182,7 +124,44 @@ export default class GameScene extends Phaser.Scene {
                 this.cameras.main.scrollX - dx, 
                 this.cameras.main.scrollY - dy
             )
-        } else if(e.isDown) {
+        } else if(e.isDown && (!this.selected || this.selected.length ===0) /*|| this.selected && e.moveTime-e.downTime > 250)*/) {
+
+            //DOESNT WORK WHEN ZOOMED
+            // Maybe use camera coordinates for select rect position, and only convert it to 
+            // screen/world ? coordinates in finish select method
+            console.log(e.position)
+            console.log(this.cameras.main.getWorldPoint(e.position.x, e.position.y))
+            const worldPosition = this.cameras.main.getWorldPoint(e.position.x, e.position.y);
+            const worldDown = this.cameras.main.getWorldPoint(e.downX, e.downY);
+            if(this.selectRect) {
+                this.selectRect.setSize(worldPosition.x-worldDown.x,worldPosition.y-worldDown.y)
+            } else {
+                //console.log(e);
+                this.selected = null;
+                this.selectRect = this.add.rectangle(
+                    worldDown.x, worldDown.y, worldPosition.x-worldDown.x, worldPosition.y-worldDown.y,
+                    0x555555, .3).setStrokeStyle(1, 0x000000, 1)
+            }
+        }
+    }
+
+    /**
+     * Handles mouse click up events
+     * 
+     * @param {Object} e The event object
+     */
+    pointerUpHandler(e) {
+        console.log("pointer up")
+        if(this.selectRect && this.selectRect.active) {
+            console.log("finish select")
+            this.finishSelect(e)
+        } else {
+            console.log("not finish select")
+            if(this.selected) {
+                console.log("Selected not null")
+                this.map.getHexAt(this.cameras.main.getWorldPoint(e.position.x, e.position.y)).addUnits(this.selected)
+                this.selected = null;
+            }
         }
     }
 
@@ -195,6 +174,33 @@ export default class GameScene extends Phaser.Scene {
         const zoomIntensity = .001;
         const zoom = Math.max(0.5,Math.min(3,this.cameras.main.zoom-zoomIntensity*e.deltaY))
         this.cameras.main.setZoom(zoom);
+    }
+
+    /**
+     * Adds all selectable objects that are within the bounds of the selectRect
+     * to the selected array. Destroys the selectRect after.
+     * 
+     * @param {Object} e The event object
+     */
+    finishSelect(e) {
+        const shape = {
+            x: this.selectRect.x,
+            y: this.selectRect.y,
+            width: this.selectRect.width,
+            height: this.selectRect.height
+        }
+
+        this.selected = this.children.getChildren().filter(object => {
+            if(object.selectable &&
+                ((object.x >= shape.x && object.x <= shape.x+shape.width) ||
+                (object.x <=shape.x && object.x >= shape.x+shape.width)) &&
+                ((object.y >= shape.y && object.y <= shape.y+shape.height) ||
+                (object.y <=shape.y && object.y >= shape.y+shape.height))
+            ) return true;
+        })
+
+        this.selectRect.destroy()
+        this.selectRect = null;
     }
 
     /**
