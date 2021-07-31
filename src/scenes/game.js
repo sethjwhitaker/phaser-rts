@@ -79,19 +79,6 @@ export default class GameScene extends Phaser.Scene {
             this.chatButtonHandler();
         });
 
-        const center = {
-            x: 0,
-            y:0 
-        }
-        for(var i = 0; i < 11; i++) {
-            const unit = this.add.existing(new Unit(this, {
-                    x: center.x,
-                    y:center.y
-                }, 5, 0xffffff
-            ))
-            this.map.getFirst().addUnit(unit)
-        }
-
         //this.input.on("pointerdown", this.pointerDownHandler)
         this.input.on("pointermove", this.pointerMoveHandler)
         this.input.on("pointerup", this.pointerUpHandler)
@@ -102,10 +89,9 @@ export default class GameScene extends Phaser.Scene {
      * @inheritdoc
      */
     update(time, delta) {
-
         if(this.lastChange > 10) {
             this.lastChange = 0;
-
+            this.map.update()
         } else {
             this.lastChange++;
         }
@@ -126,24 +112,22 @@ export default class GameScene extends Phaser.Scene {
                 this.cameras.main.scrollX - dx, 
                 this.cameras.main.scrollY - dy
             )
-        } else if(e.isDown && (!this.selected || this.selected.length ===0) /*|| this.selected && e.moveTime-e.downTime > 250)*/) {
-
-            //DOESNT WORK WHEN ZOOMED
-            // Maybe use camera coordinates for select rect position, and only convert it to 
-            // screen/world ? coordinates in finish select method
-            console.log(e.position)
-            console.log(this.cameras.main.getWorldPoint(e.position.x, e.position.y))
+        } else if(e.isDown && (!this.selected || this.selected.length ===0)) {
             const worldPosition = this.cameras.main.getWorldPoint(e.position.x, e.position.y);
             const worldDown = this.cameras.main.getWorldPoint(e.downX, e.downY);
-            if(this.selectRect) {
-                this.selectRect.setSize(worldPosition.x-worldDown.x,worldPosition.y-worldDown.y)
-            } else {
-                //console.log(e);
-                this.selected = null;
-                this.selectRect = this.add.rectangle(
-                    worldDown.x, worldDown.y, worldPosition.x-worldDown.x, worldPosition.y-worldDown.y,
-                    0x555555, .3).setStrokeStyle(1, 0x000000, 1)
+            if(Math.abs(worldPosition.x - worldDown.x) >= 5 ||
+                Math.abs(worldPosition.y - worldDown.y) >= 5) {
+                if(this.selectRect) {
+                    this.selectRect.setSize(worldPosition.x-worldDown.x,worldPosition.y-worldDown.y)
+                } else {
+                    //console.log(e);
+                    this.selected = null;
+                    this.selectRect = this.add.rectangle(
+                        worldDown.x, worldDown.y, worldPosition.x-worldDown.x, worldPosition.y-worldDown.y,
+                        0x555555, .3).setStrokeStyle(1, 0x000000, 1)
+                }
             }
+            
         }
     }
 
@@ -159,10 +143,14 @@ export default class GameScene extends Phaser.Scene {
             this.finishSelect(e)
         } else {
             console.log("not finish select")
+            const hex = this.map.getHexAt(this.cameras.main.getWorldPoint(e.position.x, e.position.y));
             if(this.selected) {
                 console.log("Selected not null")
-                this.map.getHexAt(this.cameras.main.getWorldPoint(e.position.x, e.position.y)).addUnits(this.selected)
+                hex?.addUnits(this.selected)
                 this.selected = null;
+            } else {
+                console.log("CAPTURE YOUR MOM")
+                hex?.capture();
             }
         }
     }
