@@ -176,6 +176,7 @@ function toggleUI(element) {
  */
 function prepareGameStart(ui) {
     const nameEl = ui.input.node;
+    console.log(ui)
     if(nameEl.value.length === 0) {
         nameEl.value = 'name';
     }

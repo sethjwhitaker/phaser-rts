@@ -1,5 +1,5 @@
 const protocol = getProtocol();
-const url = protocol + location.host;
+const url = protocol + "//" + location.host;
 const matchFoundEvent = new CustomEvent('matchFound', {detail: ""});
 
 /**
@@ -65,7 +65,10 @@ export default class LobbyConnection {
      * Closes the connection to the server.
      */
     static leaveLobby() {
-        this.client.close();
+        console.log(this.client)
+        if(this.client) {
+            this.client.close();
+        }
         this.client = null;
     }
 
@@ -118,9 +121,9 @@ export default class LobbyConnection {
  * @returns {String} The protocol to use for connecting to server
  */
 function getProtocol() {
-    if(location.protocol == "https://")
-        return "wss://"
-    return "ws://"
+    if(location.protocol == "https:")
+        return "wss:"
+    return "ws:"
 }
 
 

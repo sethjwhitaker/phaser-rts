@@ -35,9 +35,9 @@
   },
   "scripts": {
     "build": "webpack --config webpack.prod.js",
-    "dev": "babel-node server/app.js",
+    "dev": "babel-node server/dev.js",
     "server": "babel-node server/app.js",
-    "start": "nodemon --exec babel-node server/app.js"
+    "start": "babel-node server/app.js"
   },
   "devDependencies": {
     "inline-source-map": "^0.6.2"
