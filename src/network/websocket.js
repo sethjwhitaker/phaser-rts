@@ -65,7 +65,10 @@ export default class LobbyConnection {
      * Closes the connection to the server.
      */
     static leaveLobby() {
-        this.client.close();
+        console.log(this.client)
+        if(this.client) {
+            this.client.close();
+        }
         this.client = null;
     }
 
