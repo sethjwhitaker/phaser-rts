@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import Unit from './unit';
 import Perspective from '../util/perspective';
 
 /**
@@ -51,12 +52,20 @@ export default class Hex extends Phaser.GameObjects.Polygon {
             60, 0
         ])
         this.units = [];
+
+
+        this.state = {
+            owned: false
+        }
+
+        this.ownedLastUpdate = 0;
     }
 
     /**
      * Returns whether a point is within the bounds of this hex.
      * 
-     * @param {Object} point The {x, y} point to check
+     * @param {Object} point The {x, y}
+     *  point to check
      * @returns Whether this hex contains this point
      */
     encapsulates(point) {
@@ -111,6 +120,33 @@ export default class Hex extends Phaser.GameObjects.Polygon {
             if(this.units[i] === unit) {
                 this.units.splice(i, 1);
                 break;
+            }
+        }
+    }
+
+    capture() {
+        this.state.owned = true;
+        this.setFillStyle(0xffffff)
+    }
+
+    spawnUnit() {
+        const unit = this.scene.add.existing(new Unit(this.scene, {
+            x: 0,
+            y: 0
+        }, 5, 0xffffff))
+        this.addUnit(unit);
+    }
+
+    update() {
+        if(this.state.owned) {
+            console.log("hex update")
+            if(this.ownedLastUpdate >= 10) {
+                console.log("yup")
+                this.spawnUnit();
+                this.ownedLastUpdate = 0;
+            } else {
+                if(this.state.owned)
+                    this.ownedLastUpdate++;
             }
         }
     }
