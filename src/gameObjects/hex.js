@@ -130,10 +130,10 @@ export default class Hex extends Phaser.GameObjects.Polygon {
     }
 
     spawnUnit() {
-        const unit = this.scene.add.existing(new Unit(this.scene, {
+        const unit = this.scene.add.existing(new Unit(this.scene, this.scene.player, {
             x: 0,
             y: 0
-        }, 5, 0xffffff))
+        }, 5, this.scene.player.color))
         this.addUnit(unit);
     }
 

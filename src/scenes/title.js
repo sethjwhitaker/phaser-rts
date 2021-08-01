@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import LobbyConnection from '../network/websocket';
-import PeerConnection from '../network/peer_connection';
+import PeerConnection, {PeerClient} from '../network/peer_connection';
 
 /** 
  * The landing screen for the game. Handles initiating connections
@@ -11,6 +11,8 @@ import PeerConnection from '../network/peer_connection';
 export default class TitleScene extends Phaser.Scene {
     constructor() {
         super({key: 'title'});
+
+        this.matchedPlayers = [];
     }
 
     /**
@@ -45,12 +47,21 @@ export default class TitleScene extends Phaser.Scene {
         document.body.addEventListener('matchFound', e => {
             console.log("match found event heard");
             if(e.detail.length > 0) {
-                PeerConnection.connect(e.detail);
-            } else {
-                const id = PeerConnection.getId();
-                LobbyConnection.waitForMatch(id);
+                console.log(e.detail)
+                const data = JSON.parse(e.detail)
+                this.matchedPlayers.push(data);
             }
+            this.peerClient = new PeerClient();
+            
         });
+
+        document.body.addEventListener('peerCreated', e => {
+            console.log("peer created event heard")
+            console.log(e.detail)
+            if(this.matchedPlayers.length > 0) {
+                this.peerClient.connect(this.matchedPlayers[0].id);
+            } else LobbyConnection.waitForMatch(e.detail);
+        })
 
         document.body.addEventListener('peerConnection', (e) => {
             console.log("PeerConnection Event Heard");
@@ -62,6 +73,7 @@ export default class TitleScene extends Phaser.Scene {
             this.scene.start('game', {
                 numPlayers: 2, 
                 playerName: nameEl.value, 
+                otherPlayerData: this.matchedPlayers[0],
                 peerConnection: e.detail
             });
         })

@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import Map from '../gameObjects/map';
-import Unit from '../gameObjects/unit';
+import Player from '../gameObjects/player';
 
 
 // MULTIPLAYER IS BROKE RIGHT NOW
@@ -12,6 +12,12 @@ import Unit from '../gameObjects/unit';
 export default class GameScene extends Phaser.Scene {
     constructor() {
         super({key: 'game'});
+
+        this.peerConnection = null;
+        this.numPlayers = null;
+
+        this.player = null;
+        this.otherPlayer = null;
 
         this.lastChange = null;
 
@@ -28,9 +34,25 @@ export default class GameScene extends Phaser.Scene {
      */
     create(data) {
 
-        this.peerConnection = data.peerConnection;
-        this.scene.launch('chat-background', {peerConnection: this.peerConnection});
-            
+        const p1Options = {
+            name: data.playerName,
+            color: data.otherPlayerData?.position == 1 ? 0xff0000 : 0x0000ff
+        }
+        this.player = new Player(this, p1Options);
+
+        if(this.numPlayers > 1) {
+            const p2Options = {
+                name: data.otherPlayerData.name,
+                color: data.otherPlayerData.position == 1 ? 0x0000ff : 0xff0000,
+
+            }
+            this.otherPlayer = new Player(this, p2Options);
+            this.peerConnection = data.peerConnection;
+            this.scene.launch('chat-background', {peerConnection: this.peerConnection});
+        } else {
+
+        }
+
         this.map = new Map(
             this, 
             this.sys.game.scale.gameSize.width/2, 
@@ -217,6 +239,5 @@ export default class GameScene extends Phaser.Scene {
             console.log("not woke")
             this.scene.launch('chat-foreground');
         }
-
     }
 }

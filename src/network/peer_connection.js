@@ -1,18 +1,36 @@
 import Peer from 'peerjs';
 
+export class PeerClient {
+    constructor() {
+        this.client = new Peer();
+        this.client.on('open', (id) => {
+            console.log('Peer created. ID: ' + id);
+            document.body.dispatchEvent(new CustomEvent("peerCreated", {detail: id}))
+        });
+        this.client.on('connection', (connection) => {
+            console.log("Connection Request Received.")
+            new PeerConnection(connection);
+        });
+        this.client.on('error', (error) => {
+            console.log(error);
+        })
+    }
 
-const client = new Peer();
-client.on('open', (id) => {
-    console.log('Peer created. ID: ' + id);
-});
-client.on('connection', (connection) => {
-    console.log("Connection Request Received.")
-    new PeerConnection(connection);
-});
-client.on('error', (error) => {
-    console.log(error);
-})
+    /**
+     * Connect to another user
+     * 
+     * @param {Number} id 
+     */
+    connect(id) {
+        console.log("Sending Connection Request");
+        console.log(id);
+        new PeerConnection(this.client.connect(id));
+    }
 
+    getId() {
+        return this.client.id
+    }
+}
 
 /**
  * Handles p2p client connections.
@@ -55,30 +73,12 @@ export default class PeerConnection {
         this.connection.send(`name ${name}`);
     }
     /**
-     * Send a chat to all other connections (this should be
+     * Send a chat (this should be
      * changed to accept a userid)
      * 
      * @param {String} text 
      */
     sendChat(text) {
         this.connection.send(`chat ${text}`);
-    }
-
-    /**
-     * Connect to another user
-     * 
-     * @param {Number} id 
-     */
-    static connect(id) {
-        console.log("Sending Connection Request");
-        new PeerConnection(client.connect(id));
-    }
-    /**
-     * Returns the client id
-     * 
-     * @returns The client id
-     */
-    static getId() {
-        return client.id;
     }
 }
