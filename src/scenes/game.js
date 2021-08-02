@@ -33,6 +33,7 @@ export default class GameScene extends Phaser.Scene {
      * @inheritdoc
      */
     create(data) {
+        this.numPlayers = data.numPlayers;
 
         const p1Options = {
             name: data.playerName,
@@ -50,7 +51,11 @@ export default class GameScene extends Phaser.Scene {
             this.peerConnection = data.peerConnection;
             this.scene.launch('chat-background', {peerConnection: this.peerConnection});
         } else {
-
+            const p2Options = {
+                name: "CPU",
+                color: 0x999999
+            }
+            this.otherPlayer = new Player(this, p2Options);
         }
 
         this.map = new Map(
@@ -62,6 +67,9 @@ export default class GameScene extends Phaser.Scene {
         ); 
 
         this.add.existing(this.map);
+
+        this.map.getFirst().capture(this.otherPlayer)
+        this.map.getAt(1).capture(this.player)
 
         const quitButton = this.add.text(
             0,
@@ -203,6 +211,7 @@ export default class GameScene extends Phaser.Scene {
         }
 
         this.selected = this.children.getChildren().filter(object => {
+            console.log(object.selectable)
             if(object.selectable &&
                 ((object.x >= shape.x && object.x <= shape.x+shape.width) ||
                 (object.x <=shape.x && object.x >= shape.x+shape.width)) &&

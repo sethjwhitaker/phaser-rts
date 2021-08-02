@@ -14,7 +14,7 @@ export default class Unit extends Phaser.GameObjects.Container {
         startingPos = scene.map.mapToScreenCoordinates(startingPos.x, startingPos.y)
         super(scene, startingPos.x, startingPos.y)
 
-        this.selectable = true;
+        this.selectable = this.scene.player === player;
         
         color = color ? color : 0xffffff;
         const topPoints = Perspective.convertTo2d(Perspective.isometric3d([
