@@ -14,7 +14,8 @@ export default class Unit extends Phaser.GameObjects.Container {
         startingPos = scene.map.mapToScreenCoordinates(startingPos.x, startingPos.y)
         super(scene, startingPos.x, startingPos.y)
 
-        this.selectable = this.scene.player === player;
+        this.owned = player;
+        this.selectable = true;
         
         color = color ? color : 0xffffff;
         const topPoints = Perspective.convertTo2d(Perspective.isometric3d([
@@ -37,20 +38,20 @@ export default class Unit extends Phaser.GameObjects.Container {
         ]));
         function shadeColor(color, shade) {
             var colorStr = color.toString(16);
-            console.log(colorStr)
+
             if(colorStr.length < 6) {
                 const length = 6-colorStr.length;
                 for(var i = 0; i < length; i++) {
                     colorStr = "0" + colorStr;
                 }
             }
-            console.log(colorStr)
+
             var newColorStr = "";
             for (var i = 0; i < colorStr.length; i++) {
                 const newDigit = parseInt(colorStr[i], 16)-shade;
                 newColorStr = newColorStr + Math.max(newDigit, 0).toString(16);
             }
-            console.log(newColorStr)
+
             return parseInt(newColorStr, 16);
         }
         this.add(new Phaser.GameObjects.Polygon(

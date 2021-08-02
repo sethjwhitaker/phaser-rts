@@ -58,6 +58,8 @@ export default class PeerConnection {
                     document.body.dispatchEvent(new CustomEvent("chatReceived", {detail: data.substr(5)}));
                 } else if (data.substr(0, 4) === "name") {
                     document.body.dispatchEvent(new CustomEvent("nameReceived", {detail: data.substr(5)}));
+                } else if (data.substr(0, 5) === "input") {
+                    document.body.dispatchEvent(new CustomEvent("inputReceived", {detail: data.substr(6)}))
                 }
             });
             
@@ -65,7 +67,7 @@ export default class PeerConnection {
     }
 
     /**
-     * Send user's display name to all connections
+     * Send user's display name 
      * 
      * @param {String} name 
      */
@@ -73,12 +75,20 @@ export default class PeerConnection {
         this.connection.send(`name ${name}`);
     }
     /**
-     * Send a chat (this should be
-     * changed to accept a userid)
+     * Send a chat
      * 
      * @param {String} text 
      */
     sendChat(text) {
         this.connection.send(`chat ${text}`);
+    }
+
+    /**
+     * Send an input event
+     * 
+     * @param {Object} input
+     */
+    sendInput(input) {
+        this.connection.send(`input ${JSON.stringify(input)}`);
     }
 }

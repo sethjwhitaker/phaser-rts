@@ -111,7 +111,6 @@ export default class Map extends Phaser.GameObjects.Container {
     }
 
     update() {
-        console.log("map update")
         this.getAll().forEach(child => child.update())
     }
 }

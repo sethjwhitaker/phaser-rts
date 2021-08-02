@@ -139,7 +139,6 @@ export default class Hex extends Phaser.GameObjects.Polygon {
 
     update() {
         if(this.state.owned) {
-            console.log("hex update")
             if(this.ownedLastUpdate >= 10) {
                 console.log("yup")
                 this.spawnUnit();

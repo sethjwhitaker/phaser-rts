@@ -11,5 +11,11 @@ export default class Player extends Phaser.GameObjects.Group {
 
         this.ownedHexes = [];
         this.ownedUnits = [];
+
+        this.selected = [];
+    }
+
+    select(rect) {
+        this.scene.select(this, rect);
     }
 }

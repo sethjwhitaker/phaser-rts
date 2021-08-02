@@ -58,8 +58,9 @@ export default class TitleScene extends Phaser.Scene {
         document.body.addEventListener('peerCreated', e => {
             console.log("peer created event heard")
             console.log(e.detail)
-            if(this.matchedPlayers.length > 0) {
-                this.peerClient.connect(this.matchedPlayers[0].id);
+            if(this.matchedPlayers.length > 0 ) {
+                if(this.matchedPlayers[0].position == 1)
+                    this.peerClient.connect(this.matchedPlayers[0].id);
             } else LobbyConnection.waitForMatch(e.detail);
         })
 
