@@ -16,6 +16,11 @@ export default class Unit extends Phaser.GameObjects.Container {
 
         this.owned = player;
         this.selectable = true;
+        this.shouldUpdate = false;
+
+        this.attack = 1;
+        this.health = 1;
+        this.dying = -1;
         
         color = color ? color : 0xffffff;
         const topPoints = Perspective.convertTo2d(Perspective.isometric3d([
@@ -85,5 +90,35 @@ export default class Unit extends Phaser.GameObjects.Container {
         if(this.hex && this.hex.active)
             this.hex.removeUnit(this);
         this.hex = hex;
+    }
+
+    fight(unit) {
+        unit.health -= this.attack;
+        this.health -= unit.attack;
+        if(unit.health <= 0) {
+            unit.kill();
+        }
+        if(this.health <= 0) {
+            this.kill();
+        }
+    }
+
+    kill() {
+        if(this.hex && this.hex.active) 
+            this.hex.removeUnit(this);
+        this.dying = 0;
+        this.shouldUpdate = true;
+    }
+
+    update() {
+        if(this.dying >= 0) {
+            if(this.dying >= 200) {
+                this.dying = -1;
+                this.shouldUpdate = false;
+                this.destroy();
+            }
+            this.y -= 1;
+            this.dying++;
+        }
     }
 }

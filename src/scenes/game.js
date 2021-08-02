@@ -130,6 +130,9 @@ export default class GameScene extends Phaser.Scene {
      * @inheritdoc
      */
     update(time, delta) {
+        this.children.getChildren().forEach(child => {
+            if(child.shouldUpdate) child.update();
+        })
         if(this.lastChange > 10) {
             this.lastChange = 0;
             this.map.update()

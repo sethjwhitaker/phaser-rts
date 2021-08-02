@@ -86,6 +86,13 @@ export default class Hex extends Phaser.GameObjects.Polygon {
      * @param {Object} unit The unit to add
      */
     addUnit(unit) {
+        if(this.units.length > 0) {
+            if(unit.owned != this.units[0].owned) {
+                unit.fight(this.units[0]);
+                return;
+            }
+        }
+
         if(this.units.length >= 10) {
             this.scene.map.getAdjacentHexes(this)[0].addUnit(unit);
             return;
@@ -139,7 +146,7 @@ export default class Hex extends Phaser.GameObjects.Polygon {
 
     update() {
         if(this.state.owned) {
-            if(this.ownedLastUpdate >= 10) {
+            if(this.ownedLastUpdate >= 50) {
                 console.log("yup")
                 this.spawnUnit();
                 this.ownedLastUpdate = 0;
