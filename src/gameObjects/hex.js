@@ -55,7 +55,7 @@ export default class Hex extends Phaser.GameObjects.Polygon {
 
 
         this.state = {
-            owned: false
+            owned: null
         }
 
         this.ownedLastUpdate = 0;
@@ -124,22 +124,21 @@ export default class Hex extends Phaser.GameObjects.Polygon {
         }
     }
 
-    capture() {
-        this.state.owned = true;
-        this.setFillStyle(0xffffff)
+    capture(player) {
+        this.state.owned = player;
+        this.setFillStyle(player.color);
     }
 
     spawnUnit() {
-        const unit = this.scene.add.existing(new Unit(this.scene, {
+        const unit = this.scene.add.existing(new Unit(this.scene, this.state.owned, {
             x: 0,
             y: 0
-        }, 5, 0xffffff))
+        }, 5, this.state.owned.color))
         this.addUnit(unit);
     }
 
     update() {
         if(this.state.owned) {
-            console.log("hex update")
             if(this.ownedLastUpdate >= 10) {
                 console.log("yup")
                 this.spawnUnit();

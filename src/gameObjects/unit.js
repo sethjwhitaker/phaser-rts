@@ -10,10 +10,11 @@ export default class Unit extends Phaser.GameObjects.Container {
      * @param {Number} scale The scale factor to apply to this unit
      * @param {Number} color The fill color
      */
-    constructor(scene, startingPos, scale, color) {
+    constructor(scene, player, startingPos, scale, color) {
         startingPos = scene.map.mapToScreenCoordinates(startingPos.x, startingPos.y)
         super(scene, startingPos.x, startingPos.y)
 
+        this.owned = player;
         this.selectable = true;
         
         color = color ? color : 0xffffff;
@@ -35,14 +36,32 @@ export default class Unit extends Phaser.GameObjects.Container {
             scale, -scale, 0,
             scale, -scale, 4*scale
         ]));
+        function shadeColor(color, shade) {
+            var colorStr = color.toString(16);
+
+            if(colorStr.length < 6) {
+                const length = 6-colorStr.length;
+                for(var i = 0; i < length; i++) {
+                    colorStr = "0" + colorStr;
+                }
+            }
+
+            var newColorStr = "";
+            for (var i = 0; i < colorStr.length; i++) {
+                const newDigit = parseInt(colorStr[i], 16)-shade;
+                newColorStr = newColorStr + Math.max(newDigit, 0).toString(16);
+            }
+
+            return parseInt(newColorStr, 16);
+        }
         this.add(new Phaser.GameObjects.Polygon(
-            scene, 0, 0, topPoints, color-0x222222, 1)
+            scene, 0, 0, topPoints, shadeColor(color, 0x2), 1)
             .setOrigin(0)
             .setStrokeStyle(1, 0x000000, 1)
             .setClosePath(true)
         )
         this.add(new Phaser.GameObjects.Polygon(
-            scene, 0, 0, leftPoints, color-0x666666, 1)
+            scene, 0, 0, leftPoints, shadeColor(color, 0x6), 1)
             .setOrigin(0)
             .setStrokeStyle(1, 0x000000, 1)
             .setClosePath(true)

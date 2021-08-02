@@ -84,7 +84,18 @@ wss.on('connection', (ws) => {
             console.log("match message received");
             ws.peerId = message.substr(6);
             wss.clients.forEach(client => {
-                if(client.id === ws.matchId) client.send("peer " + ws.peerId);
+                if(client.id === ws.matchId) {
+                    client.send("peer " + JSON.stringify({
+                        name: ws.name,
+                        position: 1,
+                        id: ws.peerId
+                    }));
+                    ws.send("peer " + JSON.stringify({
+                        name: client.name,
+                        position: 2,
+                        id: client.peerId
+                    }))
+                }
             });
             console.log("Match: " + ws.id + " " + ws.matchId);
         }

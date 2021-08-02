@@ -1,9 +1,8 @@
 import Phaser from 'phaser';
 import Map from '../gameObjects/map';
-import Unit from '../gameObjects/unit';
+import Player from '../gameObjects/player';
 
 
-// MULTIPLAYER IS BROKE RIGHT NOW
 /**
  * The main scene of the game
  * 
@@ -13,24 +12,57 @@ export default class GameScene extends Phaser.Scene {
     constructor() {
         super({key: 'game'});
 
+        this.peerConnection = null;
+        this.numPlayers = null;
+
+        this.player = null;
+        this.otherPlayer = null;
+
         this.lastChange = null;
 
         this.selectRect = null;
         this.selected = null;
 
+        this.select = this.select.bind(this);
+        this.move = this.move.bind(this);
         this.pointerMoveHandler = this.pointerMoveHandler.bind(this);
         this.pointerUpHandler = this.pointerUpHandler.bind(this);
         this.finishSelect = this.finishSelect.bind(this);
+        this.moveUnits = this.moveUnits.bind(this);
     }
 
     /**
      * @inheritdoc
      */
     create(data) {
+        this.numPlayers = data.numPlayers;
+        this.position = data.otherPlayerData?.position == 1 ? 2 : 1;
+        console.log(this.position)
 
-        this.peerConnection = data.peerConnection;
-        this.scene.launch('chat-background', {peerConnection: this.peerConnection});
-            
+        const p1Options = {
+            name: data.playerName,
+            color: this.position == 1 ? 0xff0000 : 0x0000ff
+        }
+        this.player = new Player(this, p1Options);
+
+        if(this.numPlayers > 1) {
+            const p2Options = {
+                name: data.otherPlayerData.name,
+                color: this.position == 1 ? 0x0000ff : 0xff0000,
+
+            }
+            this.otherPlayer = new Player(this, p2Options);
+            this.peerConnection = data.peerConnection;
+            this.scene.launch('player-comm', {peerConnection: this.peerConnection})
+            this.scene.launch('chat-background', {peerConnection: this.peerConnection});
+        } else {
+            const p2Options = {
+                name: "CPU",
+                color: 0x999999
+            }
+            this.otherPlayer = new Player(this, p2Options);
+        }
+
         this.map = new Map(
             this, 
             this.sys.game.scale.gameSize.width/2, 
@@ -40,6 +72,15 @@ export default class GameScene extends Phaser.Scene {
         ); 
 
         this.add.existing(this.map);
+
+        if(this.position == 1 ) {
+            this.map.getFirst().capture(this.otherPlayer)
+            this.map.getAt(1).capture(this.player)
+        } else {
+            this.map.getAt(1).capture(this.otherPlayer)
+            this.map.getFirst().capture(this.player)
+        }
+        
 
         const quitButton = this.add.text(
             0,
@@ -97,6 +138,27 @@ export default class GameScene extends Phaser.Scene {
         }
     }
 
+    select(player, rect) {
+        console.log("select")
+        player.selected = this.children.getChildren().filter(object => {
+            console.log(object.selectable)
+            if(object.selectable && object.owned === player &&
+                ((object.x >= rect.x && object.x <= rect.x+rect.width) ||
+                (object.x <=rect.x && object.x >= rect.x+rect.width)) &&
+                ((object.y >= rect.y && object.y <= rect.y+rect.height) ||
+                (object.y <=rect.y && object.y >= rect.y+rect.height))
+            ) return true;
+        })
+    }
+
+    move(player, pos) {
+        console.log("move")
+        const hex = this.map.getHexAt(pos);
+        if(player.selected) {
+            hex?.addUnits(player.selected)
+        }
+    }
+
     /**
      * Handles the mouse moving
      * 
@@ -143,15 +205,8 @@ export default class GameScene extends Phaser.Scene {
             this.finishSelect(e)
         } else {
             console.log("not finish select")
-            const hex = this.map.getHexAt(this.cameras.main.getWorldPoint(e.position.x, e.position.y));
-            if(this.selected) {
-                console.log("Selected not null")
-                hex?.addUnits(this.selected)
-                this.selected = null;
-            } else {
-                console.log("CAPTURE YOUR MOM")
-                hex?.capture();
-            }
+            if(this.player.selected)
+            this.moveUnits(e);
         }
     }
 
@@ -180,17 +235,20 @@ export default class GameScene extends Phaser.Scene {
             height: this.selectRect.height
         }
 
-        this.selected = this.children.getChildren().filter(object => {
-            if(object.selectable &&
-                ((object.x >= shape.x && object.x <= shape.x+shape.width) ||
-                (object.x <=shape.x && object.x >= shape.x+shape.width)) &&
-                ((object.y >= shape.y && object.y <= shape.y+shape.height) ||
-                (object.y <=shape.y && object.y >= shape.y+shape.height))
-            ) return true;
-        })
+        this.scene.get('player-comm').select(shape);
+        this.select(this.player, shape);
 
         this.selectRect.destroy()
         this.selectRect = null;
+    }
+
+    moveUnits(e) {
+        const pos = this.cameras.main.getWorldPoint(e.position.x, e.position.y)
+
+        this.scene.get('player-comm').move(pos)
+        this.move(this.player, pos)
+        
+        this.player.selected = null;
     }
 
     /**
@@ -198,7 +256,9 @@ export default class GameScene extends Phaser.Scene {
      */
     qbhandler() {
         console.log('quit pressed')
-        this.scene.stop('chat');
+        this.scene.stop('player-comm')
+        this.scene.stop('chat-background')
+        this.scene.stop('chat-foreground')
         this.scene.stop();
         this.scene.start('title');
     }
@@ -217,6 +277,5 @@ export default class GameScene extends Phaser.Scene {
             console.log("not woke")
             this.scene.launch('chat-foreground');
         }
-
     }
 }
