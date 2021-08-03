@@ -2,6 +2,8 @@ import Phaser from 'phaser';
 import Unit from './unit';
 import Perspective from '../util/perspective';
 
+// Units kill their team mates for some reason
+// Check if master has same issue
 /**
  * This is a GameObject representing one of the tiles.
  * 
@@ -86,6 +88,17 @@ export default class Hex extends Phaser.GameObjects.Polygon {
      * @param {Object} unit The unit to add
      */
     addUnit(unit) {
+        /*if(this.units.length > 0) {
+            for(var i = 0; i < this.units.length; i++) { 
+                if(unit.owned != this.units[i].owned) {
+                    console.log(unit.owned)
+                    console.log(this.units[i].owned)
+                    console.log(this.units[i])
+                    unit.fight(this.units[i]);
+                    return;
+                }
+            }
+        }*/
         if(this.units.length > 0) {
             if(unit.owned != this.units[0].owned) {
                 unit.fight(this.units[0]);
@@ -94,11 +107,10 @@ export default class Hex extends Phaser.GameObjects.Polygon {
         }
 
         if(this.units.length >= 10) {
-            this.scene.map.getAdjacentHexes(this)[0].addUnit(unit);
+            //this.scene.map.getAdjacentHexes(this)[0].addUnit(unit);
             return;
         }
 
-        console.log(this.units.length)
         this.units.push(unit);
         unit.addToHex(this);
 
@@ -115,6 +127,7 @@ export default class Hex extends Phaser.GameObjects.Polygon {
         units.forEach(unit => {
             this.addUnit(unit)
         })
+        this.checkOwned();
     }
 
     /**
@@ -131,9 +144,31 @@ export default class Hex extends Phaser.GameObjects.Polygon {
         }
     }
 
+    tryCapture(player) {
+        if(this.state.owned !== player) {
+            if(this.units.length === 10) {
+                if(!this.units.some(unit => unit.owned !== player))
+                    this.capture(player);
+            }
+        }
+    }
+
     capture(player) {
         this.state.owned = player;
         this.setFillStyle(player.color);
+        for(var i = this.units.length-1; i >= 0; i--)
+            this.units[i].kill();
+    }
+
+    checkOwned() {
+        if(this.units.length > 0 && !this.units.some(unit => unit.owned === this.state.owned)) {
+            this.loseOwned();
+        }
+    }
+
+    loseOwned() {
+        this.state.owned = null;
+        this.setFillStyle(0x49ba5f, 1);
     }
 
     spawnUnit() {
@@ -146,9 +181,10 @@ export default class Hex extends Phaser.GameObjects.Polygon {
 
     update() {
         if(this.state.owned) {
-            if(this.ownedLastUpdate >= 50) {
+            if(this.ownedLastUpdate >= 10) {
                 console.log("yup")
-                this.spawnUnit();
+                if(this.units.length < 10)
+                    this.spawnUnit();
                 this.ownedLastUpdate = 0;
             } else {
                 if(this.state.owned)
