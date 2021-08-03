@@ -21,14 +21,14 @@ export default class GameScene extends Phaser.Scene {
         this.lastChange = null;
 
         this.selectRect = null;
-        this.selected = null;
+
 
         this.select = this.select.bind(this);
         this.move = this.move.bind(this);
         this.pointerMoveHandler = this.pointerMoveHandler.bind(this);
         this.pointerUpHandler = this.pointerUpHandler.bind(this);
         this.finishSelect = this.finishSelect.bind(this);
-        this.moveUnits = this.moveUnits.bind(this);
+        this.click = this.click.bind(this);
     }
 
     /**
@@ -155,10 +155,17 @@ export default class GameScene extends Phaser.Scene {
     }
 
     move(player, pos) {
-        console.log("move")
+        console.log("click")
         const hex = this.map.getHexAt(pos);
+        if(!hex) return;
+
         if(player.selected) {
             hex?.addUnits(player.selected)
+            player.selected = null;
+        } else if (player.selectedHex !== hex) {
+            player.selectHex(hex)
+        } else {
+            player.clickSelectedHex();
         }
     }
 
@@ -203,13 +210,12 @@ export default class GameScene extends Phaser.Scene {
      */
     pointerUpHandler(e) {
         console.log("pointer up")
+        // Finished selecting
         if(this.selectRect && this.selectRect.active) {
-            console.log("finish select")
             this.finishSelect(e)
         } else {
-            console.log("not finish select")
-            if(this.player.selected)
-            this.moveUnits(e);
+            this.click(e);
+            
         }
     }
 
@@ -245,10 +251,22 @@ export default class GameScene extends Phaser.Scene {
         this.selectRect = null;
     }
 
-    moveUnits(e) {
+    click(e) {
         const pos = this.cameras.main.getWorldPoint(e.position.x, e.position.y)
 
         this.scene.get('player-comm').move(pos)
+        this.move(this.player, pos)
+    
+    }
+
+    selectHex(e) {
+        const pos = this.cameras.main.getWorldPoint(e.position.x, e.position.y)
+
+        const hex = this.map.getHexAt(pos);
+        if(hex) {
+            
+        }
+        this.scene.get('player-comm').selectHex(pos)
         this.move(this.player, pos)
         
         this.player.selected = null;
