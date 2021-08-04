@@ -104,6 +104,7 @@ export default class Unit extends Phaser.GameObjects.Container {
     }
 
     kill() {
+        this.selectable = false;
         if(this.hex && this.hex.active) 
             this.hex.removeUnit(this);
         this.dying = 0;
