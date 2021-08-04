@@ -62,6 +62,14 @@ export default class GameScene extends Phaser.Scene {
             }
             this.otherPlayer = new Player(this, p2Options);
         }
+        this.mapLayer = new Phaser.GameObjects.Layer(this)
+                .setDepth(0).setVisible(true);
+        this.add.existing(this.mapLayer);
+        this.uiLayer = new Phaser.GameObjects.Layer(this)
+                .setDepth(1).setVisible(true);
+        this.add.existing(this.uiLayer)
+        
+
 
         this.map = new Map(
             this, 
@@ -72,14 +80,18 @@ export default class GameScene extends Phaser.Scene {
         ); 
 
         this.add.existing(this.map);
+        this.mapLayer.add(this.map);
 
+        
         if(this.position == 1 ) {
-            this.map.getFirst().capture(this.otherPlayer)
+            this.map.getAt(5).capture(this.otherPlayer)
             this.map.getAt(1).capture(this.player)
         } else {
             this.map.getAt(1).capture(this.otherPlayer)
-            this.map.getFirst().capture(this.player)
+            this.map.getAt(5).capture(this.player)
         }
+        
+
         
 
         const quitButton = this.add.text(

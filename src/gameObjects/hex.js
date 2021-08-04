@@ -55,11 +55,14 @@ export default class Hex extends Phaser.GameObjects.Polygon {
         ])
         this.units = [];
 
+        this.health = 0;
+        this.maxHealth = 10;
 
         this.state = {
             owned: null
         }
 
+        this.lastSpawnIndex = 1;
         this.ownedLastUpdate = 0;
     }
 
@@ -99,6 +102,16 @@ export default class Hex extends Phaser.GameObjects.Polygon {
                 }
             }
         }*/
+        if(this.state.owned === unit.owned) {
+            this.sacrificeUnit(unit);
+            return;
+        }
+
+        if(this.state.owned !== null) {
+            this.attack(unit);
+            return;
+        }
+
         if(this.units.length > 0) {
             if(unit.owned != this.units[0].owned) {
                 unit.fight(this.units[0]);
@@ -107,7 +120,6 @@ export default class Hex extends Phaser.GameObjects.Polygon {
         }
 
         if(this.units.length >= 10) {
-            //this.scene.map.getAdjacentHexes(this)[0].addUnit(unit);
             return;
         }
 
@@ -116,6 +128,8 @@ export default class Hex extends Phaser.GameObjects.Polygon {
 
         const index = 2*(this.units.length-1)
         unit.setPosition(this.x+this.unitSlots[index], this.y+this.unitSlots[index+1])
+
+        this.checkOwned();
     }
 
     /**
@@ -127,7 +141,6 @@ export default class Hex extends Phaser.GameObjects.Polygon {
         units.forEach(unit => {
             this.addUnit(unit)
         })
-        this.checkOwned();
     }
 
     /**
@@ -141,6 +154,25 @@ export default class Hex extends Phaser.GameObjects.Polygon {
                 this.units.splice(i, 1);
                 break;
             }
+        }
+    }
+
+    sacrificeUnit(unit) {
+        if(this.health < this.maxHealth) {
+            this.health += unit.health;
+            unit.kill();
+            this.updateHealthBar();
+        }
+    }
+
+    attack(unit) {
+        if(this.health > 0) {
+            this.health -= unit.attack;
+            unit.kill();
+            this.updateHealthBar();
+        } else {
+            unit.kill();
+            this.loseOwned();
         }
     }
 
@@ -158,6 +190,7 @@ export default class Hex extends Phaser.GameObjects.Polygon {
         this.setFillStyle(player.color);
         for(var i = this.units.length-1; i >= 0; i--)
             this.units[i].kill();
+        this.updateHealthBar();
     }
 
     checkOwned() {
@@ -168,16 +201,67 @@ export default class Hex extends Phaser.GameObjects.Polygon {
 
     loseOwned() {
         this.state.owned = null;
+        this.hideHealthBar();
         this.setFillStyle(0x49ba5f, 1);
     }
 
     spawnUnit() {
-        const unit = this.scene.add.existing(new Unit(this.scene, this.state.owned, {
-            x: 0,
-            y: 0
-        }, 5, this.state.owned.color))
-        this.addUnit(unit);
+        const adjacent = this.scene.map.getAdjacentHexes(this);
+        var index = this.lastSpawnIndex >= adjacent.length - 1 
+                ? 0 : this.lastSpawnIndex + 1;
+        var loop = true;
+        while (loop) {
+            if(index === this.lastSpawnIndex) loop = false;
+
+            if(adjacent[index].units.length < 10) {
+                const unit = this.scene.add.existing(new Unit(this.scene, this.state.owned, {
+                    x: 0,
+                    y: 0
+                }, 5, this.state.owned.color))
+                adjacent[index].addUnit(unit);
+                this.lastSpawnIndex = index;
+                break;
+            } else {
+                index = index === adjacent.length - 1 
+                ? 0 : index + 1;
+            }
+        }
     }
+
+    showHealthBar() {
+        const healthBarWidth = 50;
+        const healthBarHeight = 10;
+        this.healthBarContainer = this.scene.add.rectangle(
+            this.x-healthBarWidth/2, this.y-healthBarHeight/2, 
+            healthBarWidth, healthBarHeight,
+            0x000000, 0
+        ).setOrigin(0).setStrokeStyle(3, 0x000000, 1).setClosePath(true);
+        this.healthBar = this.scene.add.rectangle(
+            this.x-healthBarWidth/2, this.y-healthBarHeight/2, 
+            healthBarWidth*this.health/this.maxHealth, healthBarHeight,
+            0x00ff00, 1
+        ).setOrigin(0).setStrokeStyle(3, 0x000000, 1).setClosePath(true);
+        this.scene.uiLayer.add([this.healthBarContainer, this.healthBar])
+    }
+
+    updateHealthBar() {
+        if(this.healthBar) {
+            const healthBarWidth = 50;
+            this.healthBar.width = healthBarWidth*this.health/this.maxHealth
+            this.healthBar.setStrokeStyle(3, 0x000000, 1).setClosePath(true);
+        } else {
+            this.showHealthBar();
+        }
+    }
+
+    hideHealthBar() {
+        if(this.healthBar && this.healthBar.active) {
+            this.healthBarContainer.destroy()
+            this.healthBar.destroy()
+        }
+        this.healthBarContainer = null;
+        this.healthBar = null;
+    }   
 
     update() {
         if(this.state.owned) {
