@@ -21,6 +21,9 @@ export default class Map extends Phaser.GameObjects.Container {
             x: this.scene.sys.game.scale.gameSize.width/2,
             y: this.scene.sys.game.scale.gameSize.height/2
         }
+
+        this.startingPositions = null;
+
         /* Number of coordinates per pixel */
         this.hexSize = 50;
         this.createHexagonMap();
@@ -49,6 +52,8 @@ export default class Map extends Phaser.GameObjects.Container {
                 {width: 2, color: this.strokeColor, alpha: 1}
             ))
         }
+
+        this.startingPositions = hexagonMap.startingPositions;
     }
 
     /**
@@ -97,17 +102,20 @@ export default class Map extends Phaser.GameObjects.Container {
      */
     getAdjacentHexes(hex) {
         const hexes = this.getAll();
+        const adjacent = [];
         for(var i = 0; i < hexes.length; i++) {
-            if(hexes[i] === hex) {
-                const left = i === 0 
-                    ? hexes[hexes.length-1]
-                    : hexes[i-1]
-                const right = i === hexes.length-1
-                    ? hexes[0]
-                    : hexes[i+1]
-                return [left, right];
+            const current = hexes[i];
+            if(current !== hex) {
+                const tolerance = 171;
+                const distance = Math.sqrt(
+                    (hex.x-current.x)*(hex.x-current.x) +
+                    (hex.y-current.y)*(hex.y-current.y));
+                if(distance <= tolerance) {
+                    adjacent.push(current);
+                }
             }
         }
+        return adjacent;
     }
 
     update() {
