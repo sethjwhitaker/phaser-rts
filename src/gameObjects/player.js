@@ -30,25 +30,31 @@ export default class Player extends Phaser.GameObjects.Group {
             var newColorStr = "";
             for (var i = 0; i < colorStr.length; i++) {
                 const newDigit = parseInt(colorStr[i], 16)-shade;
-                newColorStr = newColorStr + Math.min(0xf, Math.max(newDigit, 0).toString(16));
+                newColorStr = newColorStr + Math.min(0xf, Math.max(newDigit, 0)).toString(16);
             }
 
+            console.log(newColorStr)
             return parseInt(newColorStr, 16);
         }
 
-        if(this.selectedHex) {
+        
+
+        /*if(this.selectedHex) {
             if(hex.state.owned === this) {
                 hex.setFillStyle(this.color, 1);
-            } else {}
-        }
+            } else {
+                this.selectedHex.setFillStyle(0x49ba5f, 1)
+            }
+        }*/
 
         if(this.scene.player === this) {
-            if(hex.state.owned === this) {
-                hex.setFillStyle(shadeColor(this.color, -0xa))
-            } else if(!hex.state.owned) {
-                hex.setFillStyle(0xffffff)
+            if(this.selectedHex) {
+                this.selectedHex.setFillStyle(this.selectedHex.color, 1)
             }
+
+            hex.setFillStyle(shadeColor(hex.fillColor, -0x5))
         }
+        
         this.selectedHex = hex;
     }
 

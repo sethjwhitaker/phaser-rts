@@ -40,6 +40,10 @@ export default class Hex extends Phaser.GameObjects.Polygon {
         this.addUnit = this.addUnit.bind(this);
         this.addUnits = this.addUnits.bind(this);
 
+        this.color = color;
+
+        this.healthBarWidth = 50;
+        this.healthBarHeight = 10;
 
         this.unitSlots = Perspective.isometric2d([
             40, 45,
@@ -54,6 +58,7 @@ export default class Hex extends Phaser.GameObjects.Polygon {
             60, 0
         ])
         this.units = [];
+        this.adjacentHexes = [];
 
         this.health = 0;
         this.maxHealth = 10;
@@ -64,6 +69,11 @@ export default class Hex extends Phaser.GameObjects.Polygon {
 
         this.lastSpawnIndex = 1;
         this.ownedLastUpdate = 0;
+    }
+
+    getAdjacentHexes() {
+        this.adjacentHexes = this.scene.map.getAdjacentHexes(this);
+        return this.adjacentHexes;
     }
 
     /**
@@ -188,6 +198,7 @@ export default class Hex extends Phaser.GameObjects.Polygon {
     capture(player) {
         this.state.owned = player;
         this.setFillStyle(player.color);
+        this.color = player.color;
         for(var i = this.units.length-1; i >= 0; i--)
             this.units[i].kill();
         this.updateHealthBar();
@@ -206,49 +217,50 @@ export default class Hex extends Phaser.GameObjects.Polygon {
     }
 
     spawnUnit() {
-        const adjacent = this.scene.map.getAdjacentHexes(this);
-        var index = this.lastSpawnIndex >= adjacent.length - 1 
+        var index = this.lastSpawnIndex >= this.adjacentHexes.length - 1 
                 ? 0 : this.lastSpawnIndex + 1;
         var loop = true;
         while (loop) {
             if(index === this.lastSpawnIndex) loop = false;
 
-            if(adjacent[index].units.length < 10) {
+            if(this.adjacentHexes[index].units.length < 10) {
                 const unit = this.scene.add.existing(new Unit(this.scene, this.state.owned, {
                     x: 0,
                     y: 0
                 }, 5, this.state.owned.color))
-                adjacent[index].addUnit(unit);
+                this.adjacentHexes[index].addUnit(unit);
                 this.lastSpawnIndex = index;
                 break;
             } else {
-                index = index === adjacent.length - 1 
+                index = index === this.adjacentHexes.length - 1 
                 ? 0 : index + 1;
             }
         }
     }
 
     showHealthBar() {
-        const healthBarWidth = 50;
-        const healthBarHeight = 10;
         this.healthBarContainer = this.scene.add.rectangle(
-            this.x-healthBarWidth/2, this.y-healthBarHeight/2, 
-            healthBarWidth, healthBarHeight,
+            this.x-this.healthBarWidth/2, this.y-this.healthBarHeight/2, 
+            this.healthBarWidth, this.healthBarHeight,
             0x000000, 0
         ).setOrigin(0).setStrokeStyle(3, 0x000000, 1).setClosePath(true);
+        this.createHealthBar();
+        this.scene.uiLayer.add([this.healthBarContainer, this.healthBar])
+    }
+
+    createHealthBar() {
         this.healthBar = this.scene.add.rectangle(
-            this.x-healthBarWidth/2, this.y-healthBarHeight/2, 
-            healthBarWidth*this.health/this.maxHealth, healthBarHeight,
+            this.x-this.healthBarWidth/2, this.y-this.healthBarHeight/2, 
+            this.healthBarWidth*this.health/this.maxHealth, this.healthBarHeight,
             0x00ff00, 1
         ).setOrigin(0).setStrokeStyle(3, 0x000000, 1).setClosePath(true);
-        this.scene.uiLayer.add([this.healthBarContainer, this.healthBar])
     }
 
     updateHealthBar() {
         if(this.healthBar) {
-            const healthBarWidth = 50;
-            this.healthBar.width = healthBarWidth*this.health/this.maxHealth
-            this.healthBar.setStrokeStyle(3, 0x000000, 1).setClosePath(true);
+            this.healthBar.destroy();
+            this.createHealthBar();
+            this.scene.uiLayer.add(this.healthBar)
         } else {
             this.showHealthBar();
         }

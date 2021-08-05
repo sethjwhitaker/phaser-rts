@@ -69,8 +69,6 @@ export default class GameScene extends Phaser.Scene {
                 .setDepth(1).setVisible(true);
         this.add.existing(this.uiLayer)
         
-
-
         this.map = new Map(
             this, 
             this.sys.game.scale.gameSize.width/2, 
@@ -82,13 +80,23 @@ export default class GameScene extends Phaser.Scene {
         this.add.existing(this.map);
         this.mapLayer.add(this.map);
 
+        //this.map.getFirst().getAdjacentHexes()
+        this.map.getAll().forEach(child => child.getAdjacentHexes())
         
         if(this.position == 1 ) {
-            this.map.getAt(5).capture(this.otherPlayer)
-            this.map.getAt(1).capture(this.player)
+            this.map.getAt(
+                this.map.startingPositions[0]
+            ).capture(this.otherPlayer)
+            this.map.getAt(
+                this.map.startingPositions[1]
+            ).capture(this.player)
         } else {
-            this.map.getAt(1).capture(this.otherPlayer)
-            this.map.getAt(5).capture(this.player)
+            this.map.getAt(
+                this.map.startingPositions[1]
+            ).capture(this.otherPlayer)
+            this.map.getAt(
+                this.map.startingPositions[0]
+            ).capture(this.player)
         }
         
 
@@ -171,10 +179,10 @@ export default class GameScene extends Phaser.Scene {
         const hex = this.map.getHexAt(pos);
         if(!hex) return;
 
-        if(player.selected) {
+        if(player.selected) {// player previously selected units
             hex?.addUnits(player.selected)
             player.selected = null;
-        } else if (player.selectedHex !== hex) {
+        } else if (player.selectedHex !== hex) { // player previously selected a hex
             player.selectHex(hex)
         } else {
             player.clickSelectedHex();
@@ -227,7 +235,6 @@ export default class GameScene extends Phaser.Scene {
             this.finishSelect(e)
         } else {
             this.click(e);
-            
         }
     }
 
@@ -256,7 +263,8 @@ export default class GameScene extends Phaser.Scene {
             height: this.selectRect.height
         }
 
-        this.scene.get('player-comm').select(shape);
+        if(this.numPlayers >1)
+            this.scene.get('player-comm').select(shape);
         this.select(this.player, shape);
 
         this.selectRect.destroy()
@@ -266,7 +274,8 @@ export default class GameScene extends Phaser.Scene {
     click(e) {
         const pos = this.cameras.main.getWorldPoint(e.position.x, e.position.y)
 
-        this.scene.get('player-comm').move(pos)
+        if(this.numPlayers >1)
+            this.scene.get('player-comm').move(pos)
         this.move(this.player, pos)
     
     }
@@ -276,10 +285,10 @@ export default class GameScene extends Phaser.Scene {
 
         const hex = this.map.getHexAt(pos);
         if(hex) {
-            
+            if(this.numPlayers >1)
+                this.scene.get('player-comm').selectHex(pos)
+            this.move(this.player, pos)
         }
-        this.scene.get('player-comm').selectHex(pos)
-        this.move(this.player, pos)
         
         this.player.selected = null;
     }
