@@ -161,6 +161,64 @@ export default class GameScene extends Phaser.Scene {
         }
     }
 
+    checkForWin() {
+        console.log("CHECKING FOR WIN")
+        const p1 = this.player.ownedUnits === 0 && this.player.ownedHexes === 0
+        const p2 =  this.otherPlayer.ownedUnits === 0 && this.otherPlayer.ownedHexes === 0
+        if(p2 && p1) this.draw();
+        else if(p2) this.win(this.player)
+        else if(p1) this.win(this.otherPlayer)
+    }
+
+    draw() {
+        console.log("DRAW")
+        this.add.text(
+            this.sys.game.scale.gameSize.width/2,
+            this.sys.game.scale.gameSize.height/2,
+            "DRAW.", 
+            {
+                color: "#0000ff",
+                padding: {
+                    x: 10, 
+                    y: 10
+                }
+            }
+        ).setOrigin(.5)
+    }
+
+    win(player) {
+        if(player === this.player) {
+            console.log("YOU WIN")
+            this.add.text(
+                this.sys.game.scale.gameSize.width/2,
+                this.sys.game.scale.gameSize.height/2,
+                "CONGRATULATIONS! YOU WIN!", 
+                {
+                    color: "#00ff00",
+                    padding: {
+                        x: 10, 
+                        y: 10
+                    }
+                }
+            ).setOrigin(.5)
+        } else {
+            console.log("YOU LOSE")
+            this.add.text(
+                this.sys.game.scale.gameSize.width/2,
+                this.sys.game.scale.gameSize.height/2,
+                "SORRY. YOU LOSE.", 
+                {
+                    color: "#ff0000",
+                    padding: {
+                        x: 10, 
+                        y: 10
+                    }
+                }
+            ).setOrigin(.5)
+        }
+        
+    }
+
     select(player, rect) {
         console.log("select")
         player.selected = this.children.getChildren().filter(object => {

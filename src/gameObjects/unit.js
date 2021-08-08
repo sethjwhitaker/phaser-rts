@@ -15,6 +15,7 @@ export default class Unit extends Phaser.GameObjects.Container {
         super(scene, startingPos.x, startingPos.y)
 
         this.owned = player;
+        player.ownedUnits++;
         this.selectable = true;
         this.shouldUpdate = false;
 
@@ -123,11 +124,13 @@ export default class Unit extends Phaser.GameObjects.Container {
     kill() {
         console.log("KILL")
         this.stopMoving();
+        this.owned.ownedUnits--;
         this.selectable = false;
         if(this.hex && this.hex.active) 
             this.hex.removeUnit(this);
         this.dying = 0;
         this.shouldUpdate = true;
+        this.scene.checkForWin();
     }
 
     stopMoving() {

@@ -9,8 +9,8 @@ export default class Player extends Phaser.GameObjects.Group {
         this.color = options?.color
         this.isHuman = options?.isHuman
 
-        this.ownedHexes = [];
-        this.ownedUnits = [];
+        this.ownedHexes = 0;
+        this.ownedUnits = 0;
 
         this.selected = [];
         this.selectedHex = null;
