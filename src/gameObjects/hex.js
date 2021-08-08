@@ -176,6 +176,7 @@ export default class Hex extends Phaser.GameObjects.Polygon {
     }
 
     attack(unit) {
+        console.log("ATTACK")
         if(this.health > 0) {
             this.health -= unit.attack;
             unit.kill();
@@ -197,6 +198,7 @@ export default class Hex extends Phaser.GameObjects.Polygon {
 
     capture(player) {
         this.state.owned = player;
+        player.ownedHexes++;
         this.setFillStyle(player.color);
         this.color = player.color;
         for(var i = this.units.length-1; i >= 0; i--)
@@ -205,15 +207,19 @@ export default class Hex extends Phaser.GameObjects.Polygon {
     }
 
     checkOwned() {
-        if(this.units.length > 0 && !this.units.some(unit => unit.owned === this.state.owned)) {
+        console.log("CHECK OWNED")
+        if(this.state.owned && this.units.length > 0 && !this.units.some(unit => unit.owned === this.state.owned)) {
             this.loseOwned();
         }
     }
 
     loseOwned() {
+        console.log("LOSE OWNED")
+        this.state.owned.ownedHexes--;
         this.state.owned = null;
         this.hideHealthBar();
         this.setFillStyle(0x49ba5f, 1);
+        this.scene.checkForWin();
     }
 
     spawnUnit() {
@@ -278,7 +284,6 @@ export default class Hex extends Phaser.GameObjects.Polygon {
     update() {
         if(this.state.owned) {
             if(this.ownedLastUpdate >= 10) {
-                console.log("yup")
                 if(this.units.length < 10)
                     this.spawnUnit();
                 this.ownedLastUpdate = 0;
