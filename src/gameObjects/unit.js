@@ -1,3 +1,4 @@
+import e from 'express';
 import Phaser from 'phaser';
 import Perspective from '../util/perspective';
 
@@ -125,14 +126,29 @@ export default class Unit extends Phaser.GameObjects.Container {
         unit.health -= this.attack;
         this.health -= unit.attack;
         if(unit.health <= 0) {
-            unit.kill();
+            unit.kill(this);
         }
         if(this.health <= 0) {
-            this.kill();
+            this.kill(unit);
         }
     }
 
-    kill() {
+    getFightDestination(unit) {
+        const diff = 10;
+        const dx = this.x - unit.x;
+        const dy = this.y - unit.y;
+        const length = Math.sqrt(dx*dx + dy*dy);
+        const angle = Math.atan(Math.abs(dy/dx));
+        const destination = {
+            x: this.x - Math.sign(dx) * Math.cos(angle) * (length/2-diff),
+            y: this.y - Math.sign(dy) * Math.sin(angle) * (length/2-diff)
+        }
+
+        console.log(destination)
+        return destination;
+    }
+
+    kill(killedBy) {
         console.log("KILL")
         this.stopMoving();
         this.owned.ownedUnits--;
@@ -142,6 +158,8 @@ export default class Unit extends Phaser.GameObjects.Container {
         this.dying = 0;
         this.shouldUpdate = true;
         this.scene.checkForWin();
+        if(killedBy) 
+            this.destination = this.getFightDestination(killedBy);
     }
 
     stopMoving() {
@@ -186,13 +204,37 @@ export default class Unit extends Phaser.GameObjects.Container {
 
     update() {
         if(this.dying >= 0) {
-            if(this.dying >= 200) {
+            console.log("DYING")
+            if(this.arriveNextUpdate) {
+                console.log("ARRIVE NEXT UPDATE")
+                this.x = this.destination.x;
+                this.y = this.destination.y;
+                this.fighting = true;
+                this.fightingTimer = 0;
+                this.arriveNextUpdate = false;
+            } else if (this.dead && this.dying >= 200) {
+                console.log("DEAD AND DEEEEEEAAAAAAADD")
                 this.dying = -1;
                 this.shouldUpdate = false;
                 this.destroy();
+            } else if (this.dead) {
+                console.log("DEAD")
+                this.dying++;
+                this.getAll().forEach(child => child.setFillStyle(child.fillColor, child.fillAlpha-.005))
+            } else if (this.fighting) {
+                console.log("FIGHTING")
+                this.fightingTimer++;
+                if(this.fightingTimer <= 7) {
+                    this.y--;
+                } else if (this.fightingTimer <= 14) {
+                    this.y++;
+                } else {
+                    this.dead = true;
+                }
+            } else {
+                console.log("MOVING")
+                this.moveStep();
             }
-            this.y -= 1;
-            this.dying++;
         }
         if(this.moving) {
             if(this.arriveNextUpdate) {
