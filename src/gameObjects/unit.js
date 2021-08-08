@@ -16,6 +16,10 @@ export default class Unit extends Phaser.GameObjects.Container {
 
         this.owned = player;
         player.ownedUnits++;
+
+        this.hex = null;
+        this.hexSlot = null;
+
         this.selectable = true;
         this.shouldUpdate = false;
 
@@ -85,9 +89,16 @@ export default class Unit extends Phaser.GameObjects.Container {
             .setClosePath(true)
         )
 
-        this.hex = null;
+
 
         this.sendTo = this.sendTo.bind(this);
+    }
+
+    moveUnit(destination) {
+        if(this.hexSlot !== null) {
+            this.hex.slotsInUse[this.hexSlot] = false;
+        }
+        this.sendTo(destination);
     }
 
     sendTo(destination) {
@@ -163,9 +174,11 @@ export default class Unit extends Phaser.GameObjects.Container {
 
     checkHex() {
         const hex = this.scene.map.getHexAt({ x: this.x, y: this.y })
-        if(this.hex !== hex) {
-            hex.addUnit(this);
-            if(hex === this.destinationHex) {
+        if(hex && this.hex !== hex) {
+            const added = hex.addUnit(this);
+            if(!added) {
+                this.hex.arriveUnit(this);
+            } else if(added && hex === this.destinationHex) {
                 hex.arriveUnit(this);
             }
         }

@@ -57,6 +57,10 @@ export default class Hex extends Phaser.GameObjects.Polygon {
             -60, 0,
             60, 0
         ])
+        this.slotsInUse = [];
+        for(var i = 0; i < 10; i++) {
+            this.slotsInUse.push(false);
+        }
         this.units = [];
         this.adjacentHexes = [];
 
@@ -112,21 +116,21 @@ export default class Hex extends Phaser.GameObjects.Polygon {
                 }
             }
         }*/
-        
-        if(this.state.owned !== null) {
-            this.attack(unit);
-            return;
-        }
 
         if(this.units.length > 0) {
             if(unit.owned != this.units[0].owned) {
                 unit.fight(this.units[0]);
-                return;
+                return true;
             }
         }
 
         if(this.units.length >= 10) {
-            return;
+            return false;
+        }
+        
+        if(this.state.owned !== null && this.state.owned !== unit.owned) {
+            this.attack(unit);
+            return true;
         }
 
         this.units.push(unit);
@@ -136,6 +140,8 @@ export default class Hex extends Phaser.GameObjects.Polygon {
         //unit.setPosition(this.x+this.unitSlots[index], this.y+this.unitSlots[index+1])
 
         this.checkOwned();
+
+        return true;
     }
 
     /**
@@ -154,8 +160,12 @@ export default class Hex extends Phaser.GameObjects.Polygon {
             this.sacrificeUnit(unit);
             return;
         }
-        const index = 2*(this.units.length-1)
-        unit.sendTo({x: this.x+this.unitSlots[index], y: this.y+this.unitSlots[index+1]})
+
+        const index = this.slotsInUse.indexOf(false);
+        console.log(index)
+        this.slotsInUse[index] = true;
+        unit.hexSlot = index;
+        unit.sendTo({x: this.x+this.unitSlots[2*index], y: this.y+this.unitSlots[2*index+1]})
     }
 
     /**
@@ -166,6 +176,10 @@ export default class Hex extends Phaser.GameObjects.Polygon {
     removeUnit(unit) {
         for(var i = 0; i < this.units.length; i++) {
             if(this.units[i] === unit) {
+                if(this.units[i].hexSlot !== null) {
+                    this.slotsInUse[this.units[i].hexSlot] = false;
+                    this.units[i].hexSlot = null;
+                }
                 this.units.splice(i, 1);
                 break;
             }
@@ -234,7 +248,7 @@ export default class Hex extends Phaser.GameObjects.Polygon {
         while (loop) {
             if(index === this.lastSpawnIndex) loop = false;
             const hex = this.adjacentHexes[index];
-            if(hex.units.length < 10) {
+            if(hex.units.length < 10 || hex.units.some(unit => unit.owned !== this.state.owned)) {
                 const unit = this.scene.add.existing(new Unit(this.scene, this.state.owned, {
                     x: 0,
                     y: 0
@@ -291,13 +305,11 @@ export default class Hex extends Phaser.GameObjects.Polygon {
 
     update() {
         if(this.state.owned) {
-            if(this.ownedLastUpdate >= 10) {
-                if(this.units.length < 10)
-                    this.spawnUnit();
+            if(this.ownedLastUpdate >= 8) {
+                this.spawnUnit();
                 this.ownedLastUpdate = 0;
             } else {
-                if(this.state.owned)
-                    this.ownedLastUpdate++;
+                this.ownedLastUpdate++;
             }
         }
     }
