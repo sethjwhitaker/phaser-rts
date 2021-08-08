@@ -1,4 +1,3 @@
-import e from 'express';
 import Phaser from 'phaser';
 import Perspective from '../util/perspective';
 
@@ -160,6 +159,8 @@ export default class Unit extends Phaser.GameObjects.Container {
         this.scene.checkForWin();
         if(killedBy) 
             this.destination = this.getFightDestination(killedBy);
+        else 
+            this.dead = true;
     }
 
     stopMoving() {
@@ -204,25 +205,20 @@ export default class Unit extends Phaser.GameObjects.Container {
 
     update() {
         if(this.dying >= 0) {
-            console.log("DYING")
             if(this.arriveNextUpdate) {
-                console.log("ARRIVE NEXT UPDATE")
                 this.x = this.destination.x;
                 this.y = this.destination.y;
                 this.fighting = true;
                 this.fightingTimer = 0;
                 this.arriveNextUpdate = false;
-            } else if (this.dead && this.dying >= 200) {
-                console.log("DEAD AND DEEEEEEAAAAAAADD")
+            } else if (this.dead && this.dying >= 50) {
                 this.dying = -1;
                 this.shouldUpdate = false;
                 this.destroy();
             } else if (this.dead) {
-                console.log("DEAD")
                 this.dying++;
-                this.getAll().forEach(child => child.setFillStyle(child.fillColor, child.fillAlpha-.005))
+                this.getAll().forEach(child => child.setFillStyle(child.fillColor, child.fillAlpha-.02))
             } else if (this.fighting) {
-                console.log("FIGHTING")
                 this.fightingTimer++;
                 if(this.fightingTimer <= 7) {
                     this.y--;
@@ -232,7 +228,6 @@ export default class Unit extends Phaser.GameObjects.Container {
                     this.dead = true;
                 }
             } else {
-                console.log("MOVING")
                 this.moveStep();
             }
         }
