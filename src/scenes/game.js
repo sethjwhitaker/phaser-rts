@@ -180,7 +180,8 @@ export default class GameScene extends Phaser.Scene {
         if(!hex) return;
 
         if(player.selected) {// player previously selected units
-            hex?.addUnits(player.selected)
+            player.selected.forEach(unit => unit.sendTo(pos))
+            //hex?.addUnits(player.selected)
             player.selected = null;
         } else if (player.selectedHex !== hex) { // player previously selected a hex
             player.selectHex(hex)

@@ -112,11 +112,7 @@ export default class Hex extends Phaser.GameObjects.Polygon {
                 }
             }
         }*/
-        if(this.state.owned === unit.owned) {
-            this.sacrificeUnit(unit);
-            return;
-        }
-
+        
         if(this.state.owned !== null) {
             this.attack(unit);
             return;
@@ -136,8 +132,8 @@ export default class Hex extends Phaser.GameObjects.Polygon {
         this.units.push(unit);
         unit.addToHex(this);
 
-        const index = 2*(this.units.length-1)
-        unit.setPosition(this.x+this.unitSlots[index], this.y+this.unitSlots[index+1])
+        //const index = 2*(this.units.length-1)
+        //unit.setPosition(this.x+this.unitSlots[index], this.y+this.unitSlots[index+1])
 
         this.checkOwned();
     }
@@ -151,6 +147,15 @@ export default class Hex extends Phaser.GameObjects.Polygon {
         units.forEach(unit => {
             this.addUnit(unit)
         })
+    }
+
+    arriveUnit(unit) {
+        if(this.state.owned === unit.owned) {
+            this.sacrificeUnit(unit);
+            return;
+        }
+        const index = 2*(this.units.length-1)
+        unit.sendTo({x: this.x+this.unitSlots[index], y: this.y+this.unitSlots[index+1]})
     }
 
     /**
@@ -222,13 +227,16 @@ export default class Hex extends Phaser.GameObjects.Polygon {
         var loop = true;
         while (loop) {
             if(index === this.lastSpawnIndex) loop = false;
-
-            if(this.adjacentHexes[index].units.length < 10) {
+            const hex = this.adjacentHexes[index];
+            if(hex.units.length < 10) {
                 const unit = this.scene.add.existing(new Unit(this.scene, this.state.owned, {
                     x: 0,
                     y: 0
                 }, 5, this.state.owned.color))
-                this.adjacentHexes[index].addUnit(unit);
+                this.units.push(unit);
+                unit.addToHex(this);
+                unit.setPosition(this.x, this.y);
+                unit.sendTo({x: hex.x, y: hex.y});
                 this.lastSpawnIndex = index;
                 break;
             } else {

@@ -21,6 +21,12 @@ export default class Unit extends Phaser.GameObjects.Container {
         this.attack = 1;
         this.health = 1;
         this.dying = -1;
+
+        this.moveSpeed = 1;
+        this.moving = false;
+        this.destination = null;
+        this.destinationHex = null;
+        this.arriveNextUpdate = false;
         
         color = color ? color : 0xffffff;
         const topPoints = Perspective.convertTo2d(Perspective.isometric3d([
@@ -79,6 +85,17 @@ export default class Unit extends Phaser.GameObjects.Container {
         )
 
         this.hex = null;
+
+        this.sendTo = this.sendTo.bind(this);
+    }
+
+    sendTo(destination) {
+        console.log("Sending to ")
+        console.log(destination)
+        this.shouldUpdate = true;
+        this.destination = destination;
+        this.destinationHex = this.scene.map.getHexAt(destination);
+        this.moving = true;
     }
 
     /**
@@ -104,11 +121,51 @@ export default class Unit extends Phaser.GameObjects.Container {
     }
 
     kill() {
+        console.log("KILL")
+        this.stopMoving();
         this.selectable = false;
         if(this.hex && this.hex.active) 
             this.hex.removeUnit(this);
         this.dying = 0;
         this.shouldUpdate = true;
+    }
+
+    stopMoving() {
+        this.destination = null;
+        this.destinationHex = null;
+        this.moving = false;
+        this.arriveNextUpdate = false;
+    }
+    
+    arrive() {
+        this.x = this.destination.x;
+        this.y = this.destination.y;
+        this.shouldUpdate = false;
+        this.stopMoving();
+    }
+
+    moveStep() {
+        const dx = this.destination.x - this.x
+        const dy = this.destination.y - this.y
+
+        if(Math.abs(dx) <= this.moveSpeed && Math.abs(dy) <= this.moveSpeed) {
+            this.arriveNextUpdate = true;
+        }
+
+        const angle = Math.atan(Math.abs(dy/dx));
+    
+        this.x += Math.sign(dx) * this.moveSpeed * Math.cos(angle);
+        this.y += Math.sign(dy) * this.moveSpeed * Math.sin(angle);
+    }
+
+    checkHex() {
+        const hex = this.scene.map.getHexAt({ x: this.x, y: this.y })
+        if(this.hex !== hex) {
+            hex.addUnit(this);
+            if(hex === this.destinationHex) {
+                hex.arriveUnit(this);
+            }
+        }
     }
 
     update() {
@@ -120,6 +177,14 @@ export default class Unit extends Phaser.GameObjects.Container {
             }
             this.y -= 1;
             this.dying++;
+        }
+        if(this.moving) {
+            if(this.arriveNextUpdate) {
+                this.arrive();
+            } else {
+                this.moveStep();
+                this.checkHex();
+            }
         }
     }
 }
