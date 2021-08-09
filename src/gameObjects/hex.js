@@ -154,6 +154,40 @@ export default class Hex extends Phaser.GameObjects.Polygon {
             this.addUnit(unit)
         })
     }
+    calculateDistance(pos1, pos2) {
+        const dx = pos1.x - pos2.x;
+        const dy = pos1.y - pos2.y;
+        return Math.sqrt(dx*dx+dy*dy)
+    }
+
+    assignSlot(unit) {
+        var index = this.slotsInUse.indexOf(false);
+        var closestDistance = this.calculateDistance(
+            unit, 
+            {
+                x: this.x+this.unitSlots[2*index],
+                y: this.y+this.unitSlots[2*index+1]
+            }
+        )
+        for(var i = index+1; i < this.slotsInUse.length; i++) {
+            if(!this.slotsInUse[i]) {
+                const d = this.calculateDistance(
+                    unit, 
+                    {
+                        x: this.x+this.unitSlots[2*i],
+                        y: this.y+this.unitSlots[2*i+1]
+                    }
+                )
+                if(d < closestDistance) {
+                    index = i;
+                    closestDistance = d;
+                }
+            }
+        }
+        this.slotsInUse[index] = true;
+        unit.hexSlot = index;
+        unit.sendTo({x: this.x+this.unitSlots[2*index], y: this.y+this.unitSlots[2*index+1]})
+    }
 
     arriveUnit(unit) {
         if(this.state.owned === unit.owned) {
@@ -161,11 +195,7 @@ export default class Hex extends Phaser.GameObjects.Polygon {
             return;
         }
 
-        const index = this.slotsInUse.indexOf(false);
-        console.log(index)
-        this.slotsInUse[index] = true;
-        unit.hexSlot = index;
-        unit.sendTo({x: this.x+this.unitSlots[2*index], y: this.y+this.unitSlots[2*index+1]})
+        this.assignSlot(unit);
     }
 
     /**
@@ -195,7 +225,6 @@ export default class Hex extends Phaser.GameObjects.Polygon {
     }
 
     attack(unit) {
-        console.log("ATTACK")
         if(this.health > 0) {
             this.health -= unit.attack;
             unit.kill();
@@ -226,14 +255,12 @@ export default class Hex extends Phaser.GameObjects.Polygon {
     }
 
     checkOwned() {
-        console.log("CHECK OWNED")
         if(this.state.owned && this.units.length > 0 && !this.units.some(unit => unit.owned === this.state.owned)) {
             this.loseOwned();
         }
     }
 
     loseOwned() {
-        console.log("LOSE OWNED")
         this.state.owned.ownedHexes--;
         this.state.owned = null;
         this.hideHealthBar();
