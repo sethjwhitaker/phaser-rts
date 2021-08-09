@@ -97,13 +97,12 @@ export default class Unit extends Phaser.GameObjects.Container {
     moveUnit(destination) {
         if(this.hexSlot !== null) {
             this.hex.slotsInUse[this.hexSlot] = false;
+            this.hexSlot = null;
         }
         this.sendTo(destination);
     }
 
     sendTo(destination) {
-        console.log("Sending to ")
-        console.log(destination)
         this.shouldUpdate = true;
         this.destination = destination;
         this.destinationHex = this.scene.map.getHexAt(destination);
@@ -143,12 +142,10 @@ export default class Unit extends Phaser.GameObjects.Container {
             y: this.y - Math.sign(dy) * Math.sin(angle) * (length/2-diff)
         }
 
-        console.log(destination)
         return destination;
     }
 
     kill(killedBy) {
-        console.log("KILL")
         this.stopMoving();
         this.owned.ownedUnits--;
         this.selectable = false;
@@ -171,6 +168,14 @@ export default class Unit extends Phaser.GameObjects.Container {
     }
     
     arrive() {
+        console.log("green")
+        console.log(this.hexSlot)
+        if(this.hexSlot === null) {
+            console.log("Yellow")
+            this.arriveNextUpdate = false;
+            this.hex.arriveUnit(this);
+            return;
+        }
         this.x = this.destination.x;
         this.y = this.destination.y;
         this.shouldUpdate = false;
