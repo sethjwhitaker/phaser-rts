@@ -22,6 +22,8 @@ export default class GameScene extends Phaser.Scene {
 
         this.selectRect = null;
 
+        this.startZoom1 = false;
+        this.statyZoom2 = false;
 
         this.select = this.select.bind(this);
         this.move = this.move.bind(this);
@@ -259,6 +261,29 @@ export default class GameScene extends Phaser.Scene {
             )
     }
 
+    calculateDistance(pos1, pos2) {
+        const dx = pos1.x - pos2.x;
+        const dy = pos1.y - pos2.y;
+        return Math.sqrt(dx*dx+dy*dy)
+    }
+
+    pinchZoom(e) {
+        if(this.startZoom1 && this.startZoom2) {
+            const p1 = this.input.manager.pointers[1];
+            const p2 = this.input.manager.pointers[2];
+
+            const d1 = this.calculateDistance(p1.prevPosition, p2.prevPosition);
+            const d2 = this.calculateDistance(p1.position, p2.position);
+
+            const zoomIntensity = .001;
+            const zoom = Math.max(0.5,Math.min(3,this.cameras.main.zoom-zoomIntensity*(d1-d2)))
+            this.cameras.main.setZoom(zoom);
+        } else {
+            if(e.id === 1) this.startZoom1 = true;
+            else if(e.id === 2) this.startZoom2 = true;
+        }
+    }
+
     /**
      * Handles the mouse moving
      * 
@@ -268,6 +293,7 @@ export default class GameScene extends Phaser.Scene {
         if(e.rightButtonDown()) {
             this.scrollCamera(e);
         } else if (this.input.manager.pointers[1].active && this.input.manager.pointers[2].active) {
+                this.pinchZoom(e);
                 this.scrollCamera(e);
         } else if(e.isDown && (!this.selected || this.selected.length === 0)) {
             const worldPosition = this.cameras.main.getWorldPoint(e.position.x, e.position.y);
@@ -301,6 +327,8 @@ export default class GameScene extends Phaser.Scene {
         } else {
             this.click(e);
         }
+        this.startZoom1 = false;
+        this.startZoom2 = false;
     }
 
     /**
