@@ -20,6 +20,9 @@ const config = {
     dom: {
         createContainer: true
     },
+    input: {
+        activePointers: 3
+    },
     parent: document.body,
     autoCenter: Phaser.Scale.CENTER_BOTH,
     disableContextMenu: true
