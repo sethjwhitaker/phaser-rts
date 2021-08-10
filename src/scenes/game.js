@@ -248,14 +248,8 @@ export default class GameScene extends Phaser.Scene {
         }
     }
 
-    /**
-     * Handles the mouse moving
-     * 
-     * @param {Object} e The event object
-     */
-    pointerMoveHandler(e) {
-        if(e.rightButtonDown()) {
-            const current = this.cameras.main.getWorldPoint(e.position.x, e.position.y);
+    scrollCamera(e) {
+        const current = this.cameras.main.getWorldPoint(e.position.x, e.position.y);
             const previous = this.cameras.main.getWorldPoint(e.prevPosition.x, e.prevPosition.y)
             const dx = current.x-previous.x
             const dy = current.y-previous.y
@@ -263,7 +257,19 @@ export default class GameScene extends Phaser.Scene {
                 this.cameras.main.scrollX - dx, 
                 this.cameras.main.scrollY - dy
             )
-        } else if(e.isDown && (!this.selected || this.selected.length ===0)) {
+    }
+
+    /**
+     * Handles the mouse moving
+     * 
+     * @param {Object} e The event object
+     */
+    pointerMoveHandler(e) {
+        if(e.rightButtonDown()) {
+            this.scrollCamera(e);
+        } else if (this.input.manager.pointers[1].active && this.input.manager.pointers[2].active) {
+                this.scrollCamera(e);
+        } else if(e.isDown && (!this.selected || this.selected.length === 0)) {
             const worldPosition = this.cameras.main.getWorldPoint(e.position.x, e.position.y);
             const worldDown = this.cameras.main.getWorldPoint(e.downX, e.downY);
             if(Math.abs(worldPosition.x - worldDown.x) >= 5 ||
