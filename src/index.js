@@ -4,6 +4,7 @@ import GameScene from './scenes/game';
 import PlayerComm from './scenes/player_comm';
 import ChatBackgroundScene from './scenes/chat/background';
 import ChatForegroundScene from './scenes/chat/foreground';
+import './styles/main.css';
 
 const titleScene = new TitleScene();
 const gameScene = new GameScene();
@@ -11,11 +12,15 @@ const playerComm = new PlayerComm();
 const chatBackgroundScene = new ChatBackgroundScene();
 const chatForegroundScene = new ChatForegroundScene();
 
+const width = window.innerWidth * window.devicePixelRatio;
+const height = window.innerHeight * window.devicePixelRatio;
+
 const config = {
     type: Phaser.AUTO,
     scale: {
-        width: 1280,
-        height: 720,
+        mode: Phaser.Scale.FIT,
+        width: width,
+        height: height,
     },
     dom: {
         createContainer: true
@@ -24,7 +29,7 @@ const config = {
         activePointers: 3
     },
     parent: document.body,
-    autoCenter: Phaser.Scale.CENTER_BOTH,
+    //autoCenter: Phaser.Scale.CENTER_BOTH,
     disableContextMenu: true
 }
 
