@@ -31,6 +31,8 @@ export default class GameScene extends Phaser.Scene {
         this.pointerUpHandler = this.pointerUpHandler.bind(this);
         this.finishSelect = this.finishSelect.bind(this);
         this.click = this.click.bind(this);
+
+        this.ui = [];
     }
 
     /**
@@ -102,45 +104,37 @@ export default class GameScene extends Phaser.Scene {
         }
         
 
-        
+        const quitButtonEl = document.createElement("button")
+        quitButtonEl.innerHTML = "QUIT"
 
-        const quitButton = this.add.text(
+        this.quitButton = this.add.dom(
             0,
             this.sys.game.scale.gameSize.height,
-            "QUIT", 
-            {
-                backgroundColor: "#ffffff",
-                color: "#000000",
-                padding: {
-                    x: 10, 
-                    y: 10
-                }
-            }
+            quitButtonEl
         ).setOrigin(.5).setInteractive();
-        quitButton.x += quitButton.width/2;
-        quitButton.y -= quitButton.height/2;
-        quitButton.on("pointerup", () => {
+        this.quitButton.x += this.quitButton.width/2 + 5;
+        this.quitButton.y -= this.quitButton.height/2 + 7;
+        this.quitButton.on("pointerup", () => {
             this.qbhandler();
         });
 
-        const chatButton = this.add.text(
+        this.ui.push(this.quitButton)
+
+        const chatButtonEl = document.createElement("button")
+        chatButtonEl.innerHTML = "CHAT"
+
+        this.chatButton = this.add.dom(
             0,
             this.sys.game.scale.gameSize.height,
-            "CHAT", 
-            {
-                backgroundColor: "#ffffff",
-                color: "#000000",
-                padding: {
-                    x: 10, 
-                    y: 10
-                }
-            }
+            chatButtonEl
         ).setOrigin(.5).setInteractive();
-        chatButton.x += chatButton.width/2;
-        chatButton.y -= chatButton.height*1.5;
-        chatButton.on("pointerup", () => {
+        this.chatButton.x += this.chatButton.width/2 + 5;
+        this.chatButton.y -= this.quitButton.height*2 + 5;
+        this.chatButton.on("pointerup", () => {
             this.chatButtonHandler();
         });
+
+        this.ui.push(this.chatButton)
 
         //this.input.on("pointerdown", this.pointerDownHandler)
         this.input.on("pointermove", this.pointerMoveHandler)
@@ -386,6 +380,11 @@ export default class GameScene extends Phaser.Scene {
         this.player.selected = null;
     }
 
+    toggleDom() {
+        this.ui.forEach(el => el.node.style.display =  
+            el.node.style.display === "none" ? "block" : "none")
+    }
+
     /**
      * Handles the quit button being pressed
      */
@@ -403,6 +402,7 @@ export default class GameScene extends Phaser.Scene {
      */
     chatButtonHandler() {
         this.scene.setVisible(false);
+        this.toggleDom();
         if(this.scene)
         if(this.scene.isSleeping('chat-foreground')) {
             console.log("woke")

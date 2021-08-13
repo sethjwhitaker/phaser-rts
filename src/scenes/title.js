@@ -126,17 +126,12 @@ function cbEventHandler(ui) {
  * @returns {Object} The created Button
  */
 function createButton(text, scene) {
-    return scene.add.text(
-        scene.sys.game.scale.gameSize.width/2,
-        scene.sys.game.scale.gameSize.height/2, 
-        text, {
-            backgroundColor: "#ffffff",
-            color: "#000000",
-            padding: {
-                x: 10,
-                y: 10
-            }
-        }
+    const button = document.createElement("button");
+    button.innerHTML = text;
+    return scene.add.dom(
+        Math.floor(scene.sys.game.scale.gameSize.width/2),
+        Math.floor(scene.sys.game.scale.gameSize.height/2), 
+        button
     ).setOrigin(.5).setInteractive();
 }
 
