@@ -168,10 +168,7 @@ export default class Unit extends Phaser.GameObjects.Container {
     }
     
     arrive() {
-        console.log("green")
-        console.log(this.hexSlot)
         if(this.hexSlot === null) {
-            console.log("Yellow")
             this.arriveNextUpdate = false;
             this.hex.arriveUnit(this);
             return;

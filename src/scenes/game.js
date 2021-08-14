@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import Map from '../gameObjects/map';
 import Player from '../gameObjects/player';
-
+import GameClock from '../util/game_clock';
 
 /**
  * The main scene of the game
@@ -443,6 +443,17 @@ export default class GameScene extends Phaser.Scene {
         this.createMap();
         this.createUI();
         this.createEventListeners();
+
+        if(this.numPlayers > 1) {
+            this.gameClock = new GameClock();
+            if(this.playerId == 2) {
+                setInterval(() => {
+                    this.gameClock.sync(this.peerConnection);
+                }, 10000)
+                
+            }
+        }
+        
     }
 
     /**

@@ -53,9 +53,20 @@ export default class PeerConnection {
 
             /* Handle received messages */
             this.connection.on('data', data => {
+                const currentTime = (new Date()).valueOf();
                 console.log("message received: " + data);
                 if(data.substr(0, 4) === "chat") {
                     document.body.dispatchEvent(new CustomEvent("chatReceived", {detail: data.substr(5)}));
+                } else if (data.substr(0, 7) === "syncreq") {
+                    const receivedTime = data.substr(8);
+                    console.log(receivedTime)
+                    this.sendSyncResponse(currentTime);
+                } else if (data.substr(0, 7) === "syncres") {
+                    const res = data.substr(8);
+                    console.log(res)
+                    const resData = JSON.parse(res);
+                    resData.push(currentTime)
+                    document.body.dispatchEvent(new CustomEvent("syncResponse", {detail: resData}));
                 } else if (data.substr(0, 4) === "name") {
                     document.body.dispatchEvent(new CustomEvent("nameReceived", {detail: data.substr(5)}));
                 } else if (data.substr(0, 5) === "input") {
@@ -64,6 +75,16 @@ export default class PeerConnection {
             });
             
         });
+    }
+
+    sendSyncResponse(time) {
+        this.connection.send(`syncres ${
+            JSON.stringify([time, (new Date()).valueOf()])
+        }`)
+    }
+
+    sendSyncRequest(time) {
+        this.connection.send(`syncreq ${time}`)
     }
 
     /**
