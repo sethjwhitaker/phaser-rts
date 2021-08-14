@@ -12,18 +12,17 @@ export default class GameScene extends Phaser.Scene {
     constructor() {
         super({key: 'game'});
 
-        this.peerConnection = null;
+        
         this.numPlayers = null;
-
+        this.playerId = null;
+        this.peerConnection = null;
         this.player = null;
         this.otherPlayer = null;
-
         this.lastChange = null;
-
         this.selectRect = null;
-
         this.startZoom1 = false;
         this.statyZoom2 = false;
+        this.ui = [];
 
         this.select = this.select.bind(this);
         this.move = this.move.bind(this);
@@ -31,29 +30,27 @@ export default class GameScene extends Phaser.Scene {
         this.pointerUpHandler = this.pointerUpHandler.bind(this);
         this.finishSelect = this.finishSelect.bind(this);
         this.click = this.click.bind(this);
-
-        this.ui = [];
     }
 
-    /**
-     * @inheritdoc
-     */
-    create(data) {
+    /* 
+    -------------------------------------------------------------------
+                            Create Methods
+    -------------------------------------------------------------------
+    */
+    createPlayers(data) {
         this.numPlayers = data.numPlayers;
-        this.position = data.otherPlayerData?.position == 1 ? 2 : 1;
-        console.log(this.position)
+        this.playerId = data.otherPlayerData?.position == 1 ? 2 : 1;
 
         const p1Options = {
             name: data.playerName,
-            color: this.position == 1 ? 0xff0000 : 0x0000ff
+            color: this.playerId == 1 ? 0xff0000 : 0x0000ff
         }
         this.player = new Player(this, p1Options);
 
         if(this.numPlayers > 1) {
             const p2Options = {
                 name: data.otherPlayerData.name,
-                color: this.position == 1 ? 0x0000ff : 0xff0000,
-
+                color: this.playerId == 1 ? 0x0000ff : 0xff0000
             }
             this.otherPlayer = new Player(this, p2Options);
             this.peerConnection = data.peerConnection;
@@ -66,6 +63,9 @@ export default class GameScene extends Phaser.Scene {
             }
             this.otherPlayer = new Player(this, p2Options);
         }
+    }
+
+    createMap() {
         this.mapLayer = new Phaser.GameObjects.Layer(this)
                 .setDepth(0).setVisible(true);
         this.add.existing(this.mapLayer);
@@ -87,7 +87,7 @@ export default class GameScene extends Phaser.Scene {
         //this.map.getFirst().getAdjacentHexes()
         this.map.getAll().forEach(child => child.getAdjacentHexes())
         
-        if(this.position == 1 ) {
+        if(this.playerId == 1 ) {
             this.map.getAt(
                 this.map.startingPositions[0]
             ).capture(this.otherPlayer)
@@ -102,8 +102,9 @@ export default class GameScene extends Phaser.Scene {
                 this.map.startingPositions[0]
             ).capture(this.player)
         }
-        
+    }
 
+    createUI() {
         const quitButtonEl = document.createElement("button")
         quitButtonEl.innerHTML = "QUIT"
 
@@ -135,86 +136,88 @@ export default class GameScene extends Phaser.Scene {
         });
 
         this.ui.push(this.chatButton)
-
-        //this.input.on("pointerdown", this.pointerDownHandler)
+    }
+    
+    createEventListeners() {
         this.input.on("pointermove", this.pointerMoveHandler)
         this.input.on("pointerup", this.pointerUpHandler)
         this.input.on("wheel", this.mouseWheelHandler)
     }
 
+    /*
+    ----------------------------------------------------------------------
+                            Event Handlers
+    ----------------------------------------------------------------------
+    */
+
     /**
-     * @inheritdoc
+     * Handles the mouse moving
+     * 
+     * @param {Object} e The event object
      */
-    update(time, delta) {
-        this.children.getChildren().forEach(child => {
-            if(child.shouldUpdate) child.update();
-        })
-        if(this.lastChange > 10) {
-            this.lastChange = 0;
-            this.map.update()
-        } else {
-            this.lastChange++;
+     pointerMoveHandler(e) {
+        if(e.rightButtonDown()) {
+            // Right button is down (panning)
+            this.scrollCamera(e);
+        } else if (this.input.manager.pointers[1].active && 
+                   this.input.manager.pointers[2].active) {
+            // 2 active pointers (touch pan/zoom)
+            this.pinchZoom(e);
+            this.scrollCamera(e);
+        } else if(e.leftButtonDown() && (!this.selected || this.selected.length === 0)) {
+            this.drag(e);
         }
     }
 
-    checkForWin() {
-        console.log("CHECKING FOR WIN")
-        const p1 = this.player.ownedUnits === 0 && this.player.ownedHexes === 0
-        const p2 =  this.otherPlayer.ownedUnits === 0 && this.otherPlayer.ownedHexes === 0
-        if(p2 && p1) this.draw();
-        else if(p2) this.win(this.player)
-        else if(p1) this.win(this.otherPlayer)
+    /**
+     * Handles mouse click up events
+     * 
+     * @param {Object} e The event object
+     */
+    pointerUpHandler(e) {
+        console.log("pointer up")
+        // Finished selecting
+        if(this.selectRect && this.selectRect.active) {
+            this.finishSelect(e)
+        } else {
+            this.click(e);
+        }
+        this.startZoom1 = false;
+        this.startZoom2 = false;
     }
 
-    draw() {
-        console.log("DRAW")
-        this.add.text(
-            this.sys.game.scale.gameSize.width/2,
-            this.sys.game.scale.gameSize.height/2,
-            "DRAW.", 
-            {
-                color: "#0000ff",
-                padding: {
-                    x: 10, 
-                    y: 10
-                }
+    /**
+     * Handles the mouse wheel scrolling
+     * 
+     * @param {Object} e The event object
+     */
+    mouseWheelHandler(e) {
+        const zoomIntensity = .001;
+        const zoom = Math.max(0.5,Math.min(3,this.cameras.main.zoom-zoomIntensity*e.deltaY))
+        this.cameras.main.setZoom(zoom);
+    }
+
+    /*
+    ----------------------------------------------------------------------
+                            Controls
+    ----------------------------------------------------------------------
+    */
+    drag(e) {
+        const worldPosition = this.cameras.main.getWorldPoint(e.position.x, e.position.y);
+        const worldDown = this.cameras.main.getWorldPoint(e.downX, e.downY);
+        if(Math.abs(worldPosition.x - worldDown.x) >= 5 ||
+            Math.abs(worldPosition.y - worldDown.y) >= 5) {
+            if(this.selectRect) {
+                this.selectRect.setSize(worldPosition.x-worldDown.x,worldPosition.y-worldDown.y)
+            } else {
+                //console.log(e);
+                this.selected = null;
+                this.selectRect = this.add.rectangle(
+                    worldDown.x, worldDown.y, worldPosition.x-worldDown.x, worldPosition.y-worldDown.y,
+                    0x555555, .3).setStrokeStyle(1, 0x000000, 1)
             }
-        ).setOrigin(.5)
-    }
-
-    win(player) {
-        if(player === this.player) {
-            console.log("YOU WIN")
-            this.add.text(
-                this.sys.game.scale.gameSize.width/2,
-                this.sys.game.scale.gameSize.height/2,
-                "CONGRATULATIONS! YOU WIN!", 
-                {
-                    color: "#00ff00",
-                    padding: {
-                        x: 10, 
-                        y: 10
-                    }
-                }
-            ).setOrigin(.5)
-        } else {
-            console.log("YOU LOSE")
-            this.add.text(
-                this.sys.game.scale.gameSize.width/2,
-                this.sys.game.scale.gameSize.height/2,
-                "SORRY. YOU LOSE.", 
-                {
-                    color: "#ff0000",
-                    padding: {
-                        x: 10, 
-                        y: 10
-                    }
-                }
-            ).setOrigin(.5)
         }
-        
     }
-
     select(player, rect) {
         console.log("select")
         player.selected = this.children.getChildren().filter(object => {
@@ -279,64 +282,6 @@ export default class GameScene extends Phaser.Scene {
     }
 
     /**
-     * Handles the mouse moving
-     * 
-     * @param {Object} e The event object
-     */
-    pointerMoveHandler(e) {
-        if(e.rightButtonDown()) {
-            this.scrollCamera(e);
-        } else if (this.input.manager.pointers[1].active && this.input.manager.pointers[2].active) {
-                this.pinchZoom(e);
-                this.scrollCamera(e);
-        } else if(e.isDown && (!this.selected || this.selected.length === 0)) {
-            const worldPosition = this.cameras.main.getWorldPoint(e.position.x, e.position.y);
-            const worldDown = this.cameras.main.getWorldPoint(e.downX, e.downY);
-            if(Math.abs(worldPosition.x - worldDown.x) >= 5 ||
-                Math.abs(worldPosition.y - worldDown.y) >= 5) {
-                if(this.selectRect) {
-                    this.selectRect.setSize(worldPosition.x-worldDown.x,worldPosition.y-worldDown.y)
-                } else {
-                    //console.log(e);
-                    this.selected = null;
-                    this.selectRect = this.add.rectangle(
-                        worldDown.x, worldDown.y, worldPosition.x-worldDown.x, worldPosition.y-worldDown.y,
-                        0x555555, .3).setStrokeStyle(1, 0x000000, 1)
-                }
-            }
-            
-        }
-    }
-
-    /**
-     * Handles mouse click up events
-     * 
-     * @param {Object} e The event object
-     */
-    pointerUpHandler(e) {
-        console.log("pointer up")
-        // Finished selecting
-        if(this.selectRect && this.selectRect.active) {
-            this.finishSelect(e)
-        } else {
-            this.click(e);
-        }
-        this.startZoom1 = false;
-        this.startZoom2 = false;
-    }
-
-    /**
-     * Handles the mouse wheel scrolling
-     * 
-     * @param {Object} e The event object
-     */
-    mouseWheelHandler(e) {
-        const zoomIntensity = .001;
-        const zoom = Math.max(0.5,Math.min(3,this.cameras.main.zoom-zoomIntensity*e.deltaY))
-        this.cameras.main.setZoom(zoom);
-    }
-
-    /**
      * Adds all selectable objects that are within the bounds of the selectRect
      * to the selected array. Destroys the selectRect after.
      * 
@@ -380,6 +325,76 @@ export default class GameScene extends Phaser.Scene {
         this.player.selected = null;
     }
 
+    /*
+    ----------------------------------------------------------------------
+                            Match End
+    ----------------------------------------------------------------------
+    */
+    checkForWin() {
+        console.log("CHECKING FOR WIN")
+        const p1 = this.player.ownedUnits === 0 && this.player.ownedHexes === 0
+        const p2 =  this.otherPlayer.ownedUnits === 0 && this.otherPlayer.ownedHexes === 0
+        if(p2 && p1) this.draw();
+        else if(p2) this.win(this.player)
+        else if(p1) this.win(this.otherPlayer)
+    }
+
+    draw() {
+        console.log("DRAW")
+        this.add.text(
+            this.sys.game.scale.gameSize.width/2,
+            this.sys.game.scale.gameSize.height/2,
+            "DRAW.", 
+            {
+                color: "#0000ff",
+                padding: {
+                    x: 10, 
+                    y: 10
+                }
+            }
+        ).setOrigin(.5)
+    }
+
+    win(player) {
+        if(player === this.player) {
+            console.log("YOU WIN")
+            this.add.text(
+                this.sys.game.scale.gameSize.width/2,
+                this.sys.game.scale.gameSize.height/2,
+                "CONGRATULATIONS! YOU WIN!", 
+                {
+                    color: "#00ff00",
+                    padding: {
+                        x: 10, 
+                        y: 10
+                    }
+                }
+            ).setOrigin(.5)
+        } else {
+            console.log("YOU LOSE")
+            this.add.text(
+                this.sys.game.scale.gameSize.width/2,
+                this.sys.game.scale.gameSize.height/2,
+                "SORRY. YOU LOSE.", 
+                {
+                    color: "#ff0000",
+                    padding: {
+                        x: 10, 
+                        y: 10
+                    }
+                }
+            ).setOrigin(.5)
+        }
+        
+    }
+
+    
+
+    /*
+    ----------------------------------------------------------------------
+                                UI
+    ----------------------------------------------------------------------
+    */
     toggleDom() {
         this.ui.forEach(el => el.node.style.display =  
             el.node.style.display === "none" ? "block" : "none")
@@ -411,6 +426,37 @@ export default class GameScene extends Phaser.Scene {
         else {
             console.log("not woke")
             this.scene.launch('chat-foreground');
+        }
+    }
+
+    /*
+    ----------------------------------------------------------------------
+                                Phaser
+    ----------------------------------------------------------------------
+    */
+
+    /**
+     * @inheritdoc
+     */
+     create(data) {
+        this.createPlayers(data);
+        this.createMap();
+        this.createUI();
+        this.createEventListeners();
+    }
+
+    /**
+     * @inheritdoc
+     */
+    update(time, delta) {
+        this.children.getChildren().forEach(child => {
+            if(child.shouldUpdate) child.update();
+        })
+        if(this.lastChange > 10) {
+            this.lastChange = 0;
+            this.map.update()
+        } else {
+            this.lastChange++;
         }
     }
 }
