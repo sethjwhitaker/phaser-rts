@@ -446,7 +446,7 @@ export default class GameScene extends Phaser.Scene {
 
         if(this.numPlayers > 1) {
             this.gameClock = new GameClock();
-            if(this.playerId == 2) {
+            if(this.playerId == 1) {
                 setInterval(() => {
                     this.gameClock.sync(this.peerConnection);
                 }, 10000)
