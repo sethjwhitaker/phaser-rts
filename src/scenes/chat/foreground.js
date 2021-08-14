@@ -69,6 +69,7 @@ export default class ChatForeground extends Phaser.Scene {
      */
     backButtonHandler() {
         console.log("back button pressed")
+        this.scene.get('game').toggleDom()
         this.scene.sleep().setVisible(true, 'game')
     }
 
