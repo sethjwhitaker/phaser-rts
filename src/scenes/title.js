@@ -13,6 +13,8 @@ export default class TitleScene extends Phaser.Scene {
         super({key: 'title'});
 
         this.matchedPlayers = [];
+
+        this.onResize = this.onResize.bind(this);
     }
 
     /**
@@ -27,7 +29,7 @@ export default class TitleScene extends Phaser.Scene {
             input: createInput(this)
         }
 
-        ui.singleplayerButton.y -= ui.singleplayerButton.height+10;
+        ui.singleplayerButton.y -= Math.floor(ui.singleplayerButton.height+10);
 
         const playerNameMemory = window.localStorage.getItem('playerName');
         if(playerNameMemory) ui.input.node.value = playerNameMemory;
@@ -78,6 +80,23 @@ export default class TitleScene extends Phaser.Scene {
                 peerConnection: e.detail
             });
         })
+
+        window.addEventListener('resize', this.onResize)
+    }
+
+    onResize(e) {
+        const widthDPR = Math.round(window.innerWidth * window.devicePixelRatio);
+        const heightDPR = Math.round(window.innerHeight * window.devicePixelRatio);
+        this.scale.setGameSize(widthDPR, heightDPR);
+        /*
+        this.scale.parent.width = Math.round(window.innerWidth);
+        this.scale.parent.height = Math.round(window.innerHeight);
+
+        this.scale.canvas.width = widthDPR;
+        this.scale.canvas.height = heightDPR;
+        this.scale.canvas.style.width = Math.round(window.innerWidth) + 'px';
+        this.scale.canvas.style.height = Math.round(window.innerHeight) + 'px';
+        */
     }
 }
 
