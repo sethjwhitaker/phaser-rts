@@ -52,7 +52,7 @@ export default class PlayerComm extends Phaser.Scene {
 
     update(time, delta) {
         if(time-this.lastMessageTime >= 200) {
-            console.log("send message")
+            //console.log("send message")
 
             this.lastMessageTime = time;
         }
