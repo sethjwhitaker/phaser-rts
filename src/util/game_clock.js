@@ -5,6 +5,7 @@ export default class GameClock {
         this.peerConnection = null;
         this.t0 = null;
 
+        this.firstSync = true;
         this.numSyncs = 0;
         this.syncResults = [];
 
@@ -45,6 +46,12 @@ export default class GameClock {
         if(this.numSyncs <= 5) this.sync(this.peerConnection);
         else {
             this.calculateOffset();
+            if(this.firstSync) {
+                const startTime = this.time() + 1000;
+                this.peerConnection.sendGameStart(startTime)
+                document.body.dispatchEvent(new CustomEvent("startGame", {detail: startTime}))
+                this.firstSync = false;
+            }
         }
     }
 

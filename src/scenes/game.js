@@ -24,6 +24,8 @@ export default class GameScene extends Phaser.Scene {
         this.statyZoom2 = false;
         this.ui = [];
 
+
+        this.startGameHandler = this.startGameHandler.bind(this);
         this.select = this.select.bind(this);
         this.move = this.move.bind(this);
         this.pointerMoveHandler = this.pointerMoveHandler.bind(this);
@@ -142,6 +144,7 @@ export default class GameScene extends Phaser.Scene {
         this.input.on("pointermove", this.pointerMoveHandler)
         this.input.on("pointerup", this.pointerUpHandler)
         this.input.on("wheel", this.mouseWheelHandler)
+        document.body.addEventListener("startGame", this.startGameHandler)
     }
 
     /*
@@ -197,11 +200,27 @@ export default class GameScene extends Phaser.Scene {
         this.cameras.main.setZoom(zoom);
     }
 
+    startGameHandler(e) {
+        const timeout = e.detail - this.gameClock.time();
+        setTimeout(() => {
+            this.startGame();
+        }, timeout);
+    }
+
     /*
     ----------------------------------------------------------------------
                             Controls
     ----------------------------------------------------------------------
     */
+
+    startGame() {
+        this.add.text(
+            this.sys.game.scale.gameSize.width/2,
+            this.sys.game.scale.gameSize.height/2,
+            "GAME START!!!!!!"
+        )
+    }
+
     drag(e) {
         const worldPosition = this.cameras.main.getWorldPoint(e.position.x, e.position.y);
         const worldDown = this.cameras.main.getWorldPoint(e.downX, e.downY);
@@ -405,6 +424,14 @@ export default class GameScene extends Phaser.Scene {
      */
     qbhandler() {
         console.log('quit pressed')
+
+        if(this.syncInterval)
+            clearInterval(this.syncInterval);
+
+        if(this.peerConnection)
+            this.peerConnection.close();
+
+
         this.scene.stop('player-comm')
         this.scene.stop('chat-background')
         this.scene.stop('chat-foreground')
@@ -447,10 +474,10 @@ export default class GameScene extends Phaser.Scene {
         if(this.numPlayers > 1) {
             this.gameClock = new GameClock();
             if(this.playerId == 2) {
-                setInterval(() => {
+                this.gameClock.sync(this.peerConnection);
+                this.syncInterval = setInterval(() => {
                     this.gameClock.sync(this.peerConnection);
                 }, 10000)
-                
             }
         }
         
