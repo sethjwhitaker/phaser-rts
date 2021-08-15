@@ -14,7 +14,7 @@ export default class TitleScene extends Phaser.Scene {
 
         this.matchedPlayers = [];
 
-        this.onResize = this.onResize.bind(this);
+        //this.onResize = this.onResize.bind(this);
     }
 
     /**
@@ -81,10 +81,10 @@ export default class TitleScene extends Phaser.Scene {
             });
         })
 
-        window.addEventListener('resize', this.onResize)
+        //window.addEventListener('resize', this.onResize)
     }
 
-    onResize(e) {
+    /*onResize(e) {
         const widthDPR = Math.round(window.innerWidth * window.devicePixelRatio);
         const heightDPR = Math.round(window.innerHeight * window.devicePixelRatio);
         this.scale.setGameSize(widthDPR, heightDPR);
@@ -97,7 +97,7 @@ export default class TitleScene extends Phaser.Scene {
         this.scale.canvas.style.width = Math.round(window.innerWidth) + 'px';
         this.scale.canvas.style.height = Math.round(window.innerHeight) + 'px';
         */
-    }
+    //}
 }
 
 /**

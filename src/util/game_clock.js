@@ -16,6 +16,9 @@ export default class GameClock {
         document.body.addEventListener("syncResponse", this.handleSyncResponse);
     }
 
+    // TODO: MAKE SURE to have peerjs use the gameClock for sync instead
+    // of raw date
+
     time() {
         return (new Date()).valueOf() + this.offset;
     }
@@ -39,8 +42,6 @@ export default class GameClock {
         const theta = ((t1-t0) - (t3-t2))/2
         const delta = (t3-t0) - (t2-t1);
         this.syncResults.push({theta: theta, delta: delta})
-        console.log("theta: " + theta)
-        console.log("delta: " + delta)
         if(this.numSyncs <= 5) this.sync(this.peerConnection);
         else {
             this.calculateOffset();
@@ -52,7 +53,7 @@ export default class GameClock {
         var mini = 0;
         var max = this.syncResults[0];
         var maxi = 0;
-        for(var i = 1; i > this.syncResults.length; i++) {
+        for(var i = 1; i < this.syncResults.length; i++) {
             if (this.syncResults[i].theta < min.theta) {
                 min = this.syncResults[i];
                 mini = i;
@@ -61,6 +62,7 @@ export default class GameClock {
                 maxi = i;
             }
         }
+        console.log(min, mini, max, maxi);
 
         // Get an idea of how volatile the connection is
         this.volatility = max.theta-min.theta;
@@ -78,12 +80,10 @@ export default class GameClock {
 
         if(Math.abs(this.offset-total) > 10) {
             this.offset -= Math.floor((this.offset-total)/2);
+            console.log("New offset: " + this.offset);
         }
 
         this.numSyncs = 0;
         this.syncResults.splice(0);
-
-        console.log("Offset: " + this.offset)
-        console.log("Volatility: " + this.volatility)
     }
 }
