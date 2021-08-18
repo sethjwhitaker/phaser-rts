@@ -330,7 +330,7 @@ export default class Hex extends Phaser.GameObjects.Polygon {
         this.healthBar = null;
     }   
 
-    update() {
+    logicUpdate() {
         if(this.state.owned) {
             if(this.ownedLastUpdate >= 10) {
                 this.spawnUnit();

@@ -21,9 +21,13 @@ export default class GameScene extends Phaser.Scene {
         this.lastChange = null;
         this.selectRect = null;
         this.startZoom1 = false;
-        this.statyZoom2 = false;
+        this.startZoom2 = false;
         this.ui = [];
 
+        this.inputBuffer = [];
+        this.gameClock = null;
+        this.logicUpdates = [];
+        this.logicFramesSinceStart = 0;
 
         this.startGameHandler = this.startGameHandler.bind(this);
         this.select = this.select.bind(this);
@@ -32,6 +36,8 @@ export default class GameScene extends Phaser.Scene {
         this.pointerUpHandler = this.pointerUpHandler.bind(this);
         this.finishSelect = this.finishSelect.bind(this);
         this.click = this.click.bind(this);
+        this.addToLogicUpdate = this.addToLogicUpdate.bind(this);
+        this.logicUpdate = this.logicUpdate.bind(this);
     }
 
     /* 
@@ -213,8 +219,28 @@ export default class GameScene extends Phaser.Scene {
     ----------------------------------------------------------------------
     */
 
+    playerInput(player, input) { 
+        input.player = player ? player : this.player;
+        input.activated = false;
+        this.inputBuffer.push(input);
+    }
+
+    activateInput(input) {
+        switch(input.type) {
+            case "select":
+                console.log("Select my guy")
+                this.select(input.player, input.rect);
+                break;
+            case "move":
+                this.move(input.player, input.pos);
+                break;
+        }
+        input.activated = true;
+    }
+
     startGame() {
-        this.add.text(
+        this.logicInterval = setInterval(this.logicUpdate, 200);
+        this.startText = this.add.text(
             this.sys.game.scale.gameSize.width/2,
             this.sys.game.scale.gameSize.height/2,
             "GAME START!!!!!!"
@@ -237,6 +263,7 @@ export default class GameScene extends Phaser.Scene {
             }
         }
     }
+
     select(player, rect) {
         console.log("select")
         player.selected = this.children.getChildren().filter(object => {
@@ -255,9 +282,9 @@ export default class GameScene extends Phaser.Scene {
         const hex = this.map.getHexAt(pos);
         if(!hex) return;
 
+        console.log("yup")
         if(player.selected) {// player previously selected units
             player.selected.forEach(unit => unit.moveUnit(pos))
-            //hex?.addUnits(player.selected)
             player.selected = null;
         } else if (player.selectedHex !== hex) { // player previously selected a hex
             player.selectHex(hex)
@@ -314,9 +341,8 @@ export default class GameScene extends Phaser.Scene {
             height: this.selectRect.height
         }
 
-        if(this.numPlayers >1)
-            this.scene.get('player-comm').select(shape);
-        this.select(this.player, shape);
+        this.scene.get('player-comm').select(shape, this.logicFramesSinceStart+1);
+
 
         this.selectRect.destroy()
         this.selectRect = null;
@@ -325,24 +351,21 @@ export default class GameScene extends Phaser.Scene {
     click(e) {
         const pos = this.cameras.main.getWorldPoint(e.position.x, e.position.y)
 
-        if(this.numPlayers >1)
-            this.scene.get('player-comm').move(pos)
-        this.move(this.player, pos)
-    
+        this.scene.get('player-comm').move(pos, this.logicFramesSinceStart+1)
     }
 
-    selectHex(e) {
+    /*selectHex(e) {
         const pos = this.cameras.main.getWorldPoint(e.position.x, e.position.y)
 
         const hex = this.map.getHexAt(pos);
         if(hex) {
-            if(this.numPlayers >1)
-                this.scene.get('player-comm').selectHex(pos)
+            if(this.numPlayers > 1)
+                this.scene.get('player-comm').selectHex(pos, this.logicFramesSinceStart)
             this.move(this.player, pos)
         }
         
         this.player.selected = null;
-    }
+    }*/
 
     /*
     ----------------------------------------------------------------------
@@ -427,6 +450,8 @@ export default class GameScene extends Phaser.Scene {
 
         if(this.syncInterval)
             clearInterval(this.syncInterval);
+        if(this.logicInterval)
+            clearInterval(this.logicInterval)
 
         if(this.peerConnection)
             this.peerConnection.close();
@@ -462,6 +487,43 @@ export default class GameScene extends Phaser.Scene {
     ----------------------------------------------------------------------
     */
 
+    addToLogicUpdate(item) {
+        if(item.logicUpdate) 
+            this.logicUpdates.push(item);
+    }
+
+    logicUpdate() {
+        var toRemove = [];
+        console.log(this.logicFramesSinceStart)
+        this.inputBuffer.forEach((input, index) => {
+            if(!input.activated) {
+                console.log(input.frame);
+                if(input.frame === this.logicFramesSinceStart) {
+                    console.log("input is on time")
+                    this.activateInput(input);
+                } else if(input.frame < this.logicFramesSinceStart) {
+                    console.log("input is late")
+                    if(input.frame < this.logicFramesSinceStart-10) {
+                        toRemove.push(index);
+                    }
+                } else {
+                    console.log("input is early")
+                }
+            } else {
+                if(input.frame < this.logicFramesSinceStart-10) {
+                    toRemove.push(index);
+                }
+            }
+        })
+        for(var i = toRemove.length-1; i >=0; i--) {
+            this.inputBuffer.splice(toRemove[i], 1);
+        }
+        this.logicUpdates.forEach(item => {item.logicUpdate()})
+
+
+        this.logicFramesSinceStart++;
+    }
+
     /**
      * @inheritdoc
      */
@@ -475,9 +537,9 @@ export default class GameScene extends Phaser.Scene {
             this.gameClock = new GameClock();
             if(this.playerId == 2) {
                 this.gameClock.sync(this.peerConnection);
-                this.syncInterval = setInterval(() => {
+                /*this.syncInterval = setInterval(() => {
                     this.gameClock.sync(this.peerConnection);
-                }, 10000)
+                }, 10000)*/
             }
         }
         
@@ -490,11 +552,5 @@ export default class GameScene extends Phaser.Scene {
         this.children.getChildren().forEach(child => {
             if(child.shouldUpdate) child.update();
         })
-        if(this.lastChange > 10) {
-            this.lastChange = 0;
-            this.map.update()
-        } else {
-            this.lastChange++;
-        }
     }
 }

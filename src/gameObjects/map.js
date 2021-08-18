@@ -28,6 +28,9 @@ export default class Map extends Phaser.GameObjects.Container {
         this.hexSize = 50;
         this.createHexagonMap();
 
+        this.scene.addToLogicUpdate(this);
+
+        this.logicUpdate = this.logicUpdate.bind(this);
         this.mapToScreenCoordinates = this.mapToScreenCoordinates.bind(this);
     }
 
@@ -116,6 +119,10 @@ export default class Map extends Phaser.GameObjects.Container {
             }
         }
         return adjacent;
+    }
+
+    logicUpdate() {
+        this.getAll().forEach(child => child.logicUpdate())
     }
 
     update() {

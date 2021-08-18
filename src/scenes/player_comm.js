@@ -19,22 +19,24 @@ export default class PlayerComm extends Phaser.Scene {
         this.sendInput = this.sendInput.bind(this);
     }
 
-    select(rect) {
+    select(rect, frame) {
         const inputObj = {
-            timeStamp: this.time.now,
+            frame: frame,
             type: "select", 
             rect: rect
         }
         this.sendInput(inputObj);
+        this.localInput(inputObj);
     }
 
-    move(pos) {
+    move(pos, frame) {
         const inputObj = {
-            timeStamp: this.time.now,
+            frame: frame,
             type: "move",
             pos: pos
         }
         this.sendInput(inputObj);
+        this.localInput(inputObj);
     }
 
 
@@ -50,27 +52,15 @@ export default class PlayerComm extends Phaser.Scene {
         document.body.addEventListener("inputReceived", this.handleInputReceived);
     }
 
-    update(time, delta) {
-        if(time-this.lastMessageTime >= 200) {
-            //console.log("send message")
-
-            this.lastMessageTime = time;
-        }
+    localInput(input) {
+        const gameScene = this.scene.get('game');
+        gameScene.playerInput(gameScene.player, input);
     }
 
     handleInputReceived(e) {
         const data = JSON.parse(e.detail)
         const gameScene = this.scene.get('game');
-        switch(data.type) {
-            case "select":
-                gameScene.select(gameScene.otherPlayer, data.rect);
-                break;
-            case "move":
-                gameScene.move(gameScene.otherPlayer, data.pos);
-                break;
-
-        }
-
+        gameScene.playerInput(gameScene.otherPlayer, data);
     }
 
     sendInput(input) {

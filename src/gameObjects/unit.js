@@ -22,12 +22,13 @@ export default class Unit extends Phaser.GameObjects.Container {
 
         this.selectable = true;
         this.shouldUpdate = false;
+        this.logicShouldUpdate = false;
 
         this.attack = 1;
         this.health = 1;
         this.dying = -1;
 
-        this.moveSpeed = 1;
+        this.moveSpeed = 10;
         this.moving = false;
         this.destination = null;
         this.destinationHex = null;
@@ -88,9 +89,10 @@ export default class Unit extends Phaser.GameObjects.Container {
             .setStrokeStyle(1, 0x000000, 1)
             .setClosePath(true)
         )
+        
+        scene.addToLogicUpdate(this);
 
-
-
+        this.logicUpdate = this.logicUpdate.bind(this);
         this.sendTo = this.sendTo.bind(this);
     }
 
@@ -103,7 +105,7 @@ export default class Unit extends Phaser.GameObjects.Container {
     }
 
     sendTo(destination) {
-        this.shouldUpdate = true;
+        this.logicShouldUpdate = true;
         this.destination = destination;
         this.destinationHex = this.scene.map.getHexAt(destination);
         this.moving = true;
@@ -152,7 +154,7 @@ export default class Unit extends Phaser.GameObjects.Container {
         if(this.hex && this.hex.active) 
             this.hex.removeUnit(this);
         this.dying = 0;
-        this.shouldUpdate = true;
+        this.logicShouldUpdate = true;
         this.scene.checkForWin();
         if(killedBy) 
             this.destination = this.getFightDestination(killedBy);
@@ -205,7 +207,7 @@ export default class Unit extends Phaser.GameObjects.Container {
         }
     }
 
-    update() {
+    logicUpdate() {
         if(this.dying >= 0) {
             if(this.arriveNextUpdate) {
                 this.x = this.destination.x;
@@ -215,7 +217,7 @@ export default class Unit extends Phaser.GameObjects.Container {
                 this.arriveNextUpdate = false;
             } else if (this.dead && this.dying >= 50) {
                 this.dying = -1;
-                this.shouldUpdate = false;
+                this.logicShouldUpdate = false;
                 this.destroy();
             } else if (this.dead) {
                 this.dying++;
@@ -241,5 +243,9 @@ export default class Unit extends Phaser.GameObjects.Container {
                 this.checkHex();
             }
         }
+    }
+
+    update() {
+        
     }
 }

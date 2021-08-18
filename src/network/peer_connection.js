@@ -73,7 +73,6 @@ export default class PeerConnection {
                     document.body.dispatchEvent(new CustomEvent("inputReceived", {detail: data.substr(6)}))
                 }
             });
-            
         });
     }
 
