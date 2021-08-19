@@ -41,7 +41,7 @@ export default class Unit extends Phaser.GameObjects.Container {
         this.arriveNextUpdate = false;
         
         this.color = color ? color : 0xffffff;
-        this.createSprite();
+        this.createSprite(scale);
         
         scene.addToLogicUpdate(this);
 
@@ -208,18 +208,28 @@ export default class Unit extends Phaser.GameObjects.Container {
     update(time, delta) {
         if(this.x != this.logic.x || this.y != this.logic.y) {
             if(this.logicUpdated) {
-                this.lerpStartTime = time;
+                this.lerpStart = {
+                    time: time,
+                    x: this.x,
+                    y: this.y
+                }
+                this.lerpEnd = {
+                    time: time+this.scene.logicFrameDelay,
+                    x: this.logic.x,
+                    y: this.logic.y
+                }
                 this.logicUpdated = false;
             } else {
-                const percentage = (time-this.lerpStartTime)/this.scene.logicFrameDelay;
-                Phaser.Math.Linear(this.x, this.logic.x, percentage);
-                Phaser.Math.Linear(this.y, this.logic.y, percentage);
+                const percentage = Math.min(1, (time-this.lerpStart.time)/
+                        (this.lerpEnd.time-this.lerpStart.time));
+                this.x = Phaser.Math.Linear(this.lerpStart.x, this.lerpEnd.x, percentage);
+                this.y = Phaser.Math.Linear(this.lerpStart.y, this.lerpEnd.y, percentage);
             }
         }
         
     }
 
-    createSprite() {
+    createSprite(scale) {
         const topPoints = Perspective.convertTo2d(Perspective.isometric3d([
             scale, scale, 4*scale,
             scale, -scale, 4*scale,
@@ -257,19 +267,19 @@ export default class Unit extends Phaser.GameObjects.Container {
             return parseInt(newColorStr, 16);
         }
         this.add(new Phaser.GameObjects.Polygon(
-            scene, 0, 0, topPoints, shadeColor(this.color, 0x2), 1)
+            this.scene, 0, 0, topPoints, shadeColor(this.color, 0x2), 1)
             .setOrigin(0)
             .setStrokeStyle(1, 0x000000, 1)
             .setClosePath(true)
         )
         this.add(new Phaser.GameObjects.Polygon(
-            scene, 0, 0, leftPoints, shadeColor(this.color, 0x6), 1)
+            this.scene, 0, 0, leftPoints, shadeColor(this.color, 0x6), 1)
             .setOrigin(0)
             .setStrokeStyle(1, 0x000000, 1)
             .setClosePath(true)
         )
         this.add(new Phaser.GameObjects.Polygon(
-            scene, 0, 0, rightPoints, this.color, 1)
+            this.scene, 0, 0, rightPoints, this.color, 1)
             .setOrigin(0)
             .setStrokeStyle(1, 0x000000, 1)
             .setClosePath(true)

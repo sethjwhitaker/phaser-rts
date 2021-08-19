@@ -552,7 +552,7 @@ export default class GameScene extends Phaser.Scene {
     update(time, delta) {
         this.children.getChildren().forEach(child => {
             //if(child.shouldUpdate) 
-            child.update();
+            child.update(time, delta);
         })
     }
 }
