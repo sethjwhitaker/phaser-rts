@@ -28,6 +28,7 @@ export default class GameScene extends Phaser.Scene {
         this.gameClock = null;
         this.logicUpdates = [];
         this.logicFramesSinceStart = 0;
+        this.logicFrameDelay = 200;
 
         this.startGameHandler = this.startGameHandler.bind(this);
         this.select = this.select.bind(this);
@@ -239,7 +240,7 @@ export default class GameScene extends Phaser.Scene {
     }
 
     startGame() {
-        this.logicInterval = setInterval(this.logicUpdate, 200);
+        this.logicInterval = setInterval(this.logicUpdate, this.logicFrameDelay);
         this.startText = this.add.text(
             this.sys.game.scale.gameSize.width/2,
             this.sys.game.scale.gameSize.height/2,
@@ -550,7 +551,8 @@ export default class GameScene extends Phaser.Scene {
      */
     update(time, delta) {
         this.children.getChildren().forEach(child => {
-            if(child.shouldUpdate) child.update();
+            //if(child.shouldUpdate) 
+            child.update();
         })
     }
 }

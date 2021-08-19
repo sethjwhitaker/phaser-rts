@@ -282,6 +282,7 @@ export default class Hex extends Phaser.GameObjects.Polygon {
                 }, 5, this.state.owned.color))
                 this.units.push(unit);
                 unit.addToHex(this);
+                unit.setLogicPosition(this);
                 unit.setPosition(this.x, this.y);
                 unit.sendTo({x: hex.x, y: hex.y});
                 this.lastSpawnIndex = index;

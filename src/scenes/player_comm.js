@@ -39,7 +39,6 @@ export default class PlayerComm extends Phaser.Scene {
         this.localInput(inputObj);
     }
 
-
     /**
      * @inheritdoc
      */
