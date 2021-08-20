@@ -1,9 +1,11 @@
 import Phaser from 'phaser';
 
 export default class Player extends Phaser.GameObjects.Group {
+    static nextPlayerId = 0;
     constructor(scene, options) {
         super(scene)
 
+        this.id = Player.nextPlayerId++;
         this.peerId = options?.peerId
         this.name = options?.name
         this.color = options?.color
@@ -14,6 +16,17 @@ export default class Player extends Phaser.GameObjects.Group {
 
         this.selected = [];
         this.selectedHex = null;
+    }
+
+    save() {
+        const obj = {
+            ownedHexes: this.ownedHexes,
+            ownedUnits: this.ownedUnits,
+            selected: this.selected.map(unit => unit.id),
+            selectedHex: this.slectedHex ? this.selectedHex.id : null
+        }
+        console.log(obj)
+        return obj
     }
 
     selectHex(hex) {

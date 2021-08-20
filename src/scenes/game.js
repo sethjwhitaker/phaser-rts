@@ -27,8 +27,9 @@ export default class GameScene extends Phaser.Scene {
         this.inputBuffer = [];
         this.gameClock = null;
         this.logicUpdates = [];
+        this.prevLogicFrames = [];
         this.logicFramesSinceStart = 0;
-        this.logicFrameDelay = 200;
+        this.logicFrameDelay = 1000;
 
         this.startGameHandler = this.startGameHandler.bind(this);
         this.select = this.select.bind(this);
@@ -37,6 +38,7 @@ export default class GameScene extends Phaser.Scene {
         this.pointerUpHandler = this.pointerUpHandler.bind(this);
         this.finishSelect = this.finishSelect.bind(this);
         this.click = this.click.bind(this);
+        this.saveLogicFrame = this.saveLogicFrame.bind(this);
         this.addToLogicUpdate = this.addToLogicUpdate.bind(this);
         this.logicUpdate = this.logicUpdate.bind(this);
     }
@@ -493,9 +495,28 @@ export default class GameScene extends Phaser.Scene {
             this.logicUpdates.push(item);
     }
 
+    saveLogicFrame(){
+        const logicFrame = {
+            number: this.logicFramesSinceStart,
+            player: this.player.save(),
+            otherPlayer: this.otherPlayer.save(),
+            inputs: this.inputBuffer.filter(inp => {
+                inp.frame == this.logicFramesSinceStart
+            }),
+            units: this.children.getChildren().filter(child => child.constructor.name == "Unit")
+                    .map(unit => unit.save()),
+            hexes: this.map.getAll().map(hex => hex.save())
+        };
+        console.log(logicFrame)
+        this.prevLogicFrames.push(JSON.stringify(logicFrame));
+        console.log(this.prevLogicFrames[this.prevLogicFrames.length-1])
+    }
+
     logicUpdate() {
-        var toRemove = [];
         console.log(this.logicFramesSinceStart)
+        this.saveLogicFrame();
+
+        var toRemove = [];
         this.inputBuffer.forEach((input, index) => {
             if(!input.activated) {
                 console.log(input.frame);
@@ -516,11 +537,11 @@ export default class GameScene extends Phaser.Scene {
                 }
             }
         })
+
         for(var i = toRemove.length-1; i >=0; i--) {
             this.inputBuffer.splice(toRemove[i], 1);
         }
         this.logicUpdates.forEach(item => {item.logicUpdate()})
-
 
         this.logicFramesSinceStart++;
     }

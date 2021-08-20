@@ -10,6 +10,7 @@ import Perspective from '../util/perspective';
  * @author Seth Whitaker
  */
 export default class Hex extends Phaser.GameObjects.Polygon {
+    static nextHexId = 0;
    /**
     * Instantiates a new hexagon object.
     * 
@@ -33,12 +34,10 @@ export default class Hex extends Phaser.GameObjects.Polygon {
 
         /* Instantiate polygon */
         super(scene, x, y, Perspective.isometric2d(points), color);
+
+        this.id = Hex.nextHexId++;
         /* Center origin and set stroke style */
         this.setOrigin(0).setStrokeStyle(border.width, border.color, border.alpha);
-
-        this.encapsulates = this.encapsulates.bind(this);
-        this.addUnit = this.addUnit.bind(this);
-        this.addUnits = this.addUnits.bind(this);
 
         this.color = color;
 
@@ -57,22 +56,41 @@ export default class Hex extends Phaser.GameObjects.Polygon {
             -60, 0,
             60, 0
         ])
-        this.slotsInUse = [];
-        for(var i = 0; i < 10; i++) {
-            this.slotsInUse.push(false);
+        this.logic = {
+            slotsInUse: [],
+            units: [],
+            health: 0,
+            owned: null,
         }
-        this.units = [];
+        for(var i = 0; i < 10; i++) {
+            this.logic.slotsInUse.push(false);
+        }
         this.adjacentHexes = [];
 
-        this.health = 0;
         this.maxHealth = 10;
-
-        this.state = {
-            owned: null
-        }
+        this.logic.owned
 
         this.lastSpawnIndex = 1;
         this.ownedLastUpdate = 0;
+
+        this.encapsulates = this.encapsulates.bind(this);
+        this.addUnit = this.addUnit.bind(this);
+        this.addUnits = this.addUnits.bind(this);
+    }
+
+    save() {
+        const obj = {
+            ...this.logic,
+            slotsInUse: this.logic.slotsInUse.map((slot, index) => {
+                return slot === false ? false : index
+            }).filter(slot => {
+                slot !== false
+            }),
+            units: this.logic.units.map(unit => unit.id),
+            owned: this.logic.owned ? this.logic.owned.id : null
+        }
+        console.log(obj);
+        return obj
     }
 
     getAdjacentHexes() {
@@ -105,38 +123,38 @@ export default class Hex extends Phaser.GameObjects.Polygon {
      * @param {Object} unit The unit to add
      */
     addUnit(unit) {
-        /*if(this.units.length > 0) {
-            for(var i = 0; i < this.units.length; i++) { 
-                if(unit.owned != this.units[i].owned) {
+        /*if(this.logic.units.length > 0) {
+            for(var i = 0; i < this.logic.units.length; i++) { 
+                if(unit.owned != this.logic.units[i].owned) {
                     console.log(unit.owned)
-                    console.log(this.units[i].owned)
-                    console.log(this.units[i])
-                    unit.fight(this.units[i]);
+                    console.log(this.logic.units[i].owned)
+                    console.log(this.logic.units[i])
+                    unit.fight(this.logic.units[i]);
                     return;
                 }
             }
         }*/
 
-        if(this.units.length > 0) {
-            if(unit.owned != this.units[0].owned) {
-                unit.fight(this.units[0]);
+        if(this.logic.units.length > 0) {
+            if(unit.owned != this.logic.units[0].logic.owned) {
+                unit.fight(this.logic.units[0]);
                 return true;
             }
         }
 
-        if(this.units.length >= 10) {
+        if(this.logic.units.length >= 10) {
             return false;
         }
         
-        if(this.state.owned !== null && this.state.owned !== unit.owned) {
+        if(this.logic.owned !== null && this.logic.owned !== unit.logic.owned) {
             this.attack(unit);
             return true;
         }
 
-        this.units.push(unit);
+        this.logic.units.push(unit);
         unit.addToHex(this);
 
-        //const index = 2*(this.units.length-1)
+        //const index = 2*(this.logic.units.length-1)
         //unit.setPosition(this.x+this.unitSlots[index], this.y+this.unitSlots[index+1])
 
         this.checkOwned();
@@ -161,7 +179,7 @@ export default class Hex extends Phaser.GameObjects.Polygon {
     }
 
     assignSlot(unit) {
-        var index = this.slotsInUse.indexOf(false);
+        var index = this.logic.slotsInUse.indexOf(false);
         var closestDistance = this.calculateDistance(
             unit, 
             {
@@ -169,8 +187,8 @@ export default class Hex extends Phaser.GameObjects.Polygon {
                 y: this.y+this.unitSlots[2*index+1]
             }
         )
-        for(var i = index+1; i < this.slotsInUse.length; i++) {
-            if(!this.slotsInUse[i]) {
+        for(var i = index+1; i < this.logic.slotsInUse.length; i++) {
+            if(!this.logic.slotsInUse[i]) {
                 const d = this.calculateDistance(
                     unit, 
                     {
@@ -184,13 +202,13 @@ export default class Hex extends Phaser.GameObjects.Polygon {
                 }
             }
         }
-        this.slotsInUse[index] = true;
+        this.logic.slotsInUse[index] = true;
         unit.hexSlot = index;
         unit.sendTo({x: this.x+this.unitSlots[2*index], y: this.y+this.unitSlots[2*index+1]})
     }
 
     arriveUnit(unit) {
-        if(this.state.owned === unit.owned) {
+        if(this.logic.owned === unit.owned) {
             this.sacrificeUnit(unit);
             return;
         }
@@ -204,29 +222,29 @@ export default class Hex extends Phaser.GameObjects.Polygon {
      * @param {Object} unit The unit to remove
      */
     removeUnit(unit) {
-        for(var i = 0; i < this.units.length; i++) {
-            if(this.units[i] === unit) {
-                if(this.units[i].hexSlot !== null) {
-                    this.slotsInUse[this.units[i].hexSlot] = false;
-                    this.units[i].hexSlot = null;
+        for(var i = 0; i < this.logic.units.length; i++) {
+            if(this.logic.units[i] === unit) {
+                if(this.logic.units[i].hexSlot !== null) {
+                    this.logic.slotsInUse[this.logic.units[i].hexSlot] = false;
+                    this.logic.units[i].hexSlot = null;
                 }
-                this.units.splice(i, 1);
+                this.logic.units.splice(i, 1);
                 break;
             }
         }
     }
 
     sacrificeUnit(unit) {
-        if(this.health < this.maxHealth) {
-            this.health += unit.health;
+        if(this.logic.health < this.maxHealth) {
+            this.logic.health += unit.logic.health;
             unit.kill();
             this.updateHealthBar();
         }
     }
 
     attack(unit) {
-        if(this.health > 0) {
-            this.health -= unit.attack;
+        if(this.logic.health > 0) {
+            this.logic.health -= unit.attack;
             unit.kill();
             this.updateHealthBar();
         } else {
@@ -236,33 +254,33 @@ export default class Hex extends Phaser.GameObjects.Polygon {
     }
 
     tryCapture(player) {
-        if(this.state.owned !== player) {
-            if(this.units.length === 10) {
-                if(!this.units.some(unit => unit.owned !== player))
+        if(this.logic.owned !== player) {
+            if(this.logic.units.length === 10) {
+                if(!this.logic.units.some(unit => unit.owned !== player))
                     this.capture(player);
             }
         }
     }
 
     capture(player) {
-        this.state.owned = player;
+        this.logic.owned = player;
         player.ownedHexes++;
         this.setFillStyle(player.color);
         this.color = player.color;
-        for(var i = this.units.length-1; i >= 0; i--)
-            this.units[i].kill();
+        for(var i = this.logic.units.length-1; i >= 0; i--)
+            this.logic.units[i].kill();
         this.updateHealthBar();
     }
 
     checkOwned() {
-        if(this.state.owned && this.units.length > 0 && !this.units.some(unit => unit.owned === this.state.owned)) {
+        if(this.logic.owned && this.logic.units.length > 0 && !this.logic.units.some(unit => unit.owned === this.logic.owned)) {
             this.loseOwned();
         }
     }
 
     loseOwned() {
-        this.state.owned.ownedHexes--;
-        this.state.owned = null;
+        this.logic.owned.ownedHexes--;
+        this.logic.owned = null;
         this.hideHealthBar();
         this.setFillStyle(0x49ba5f, 1);
         this.scene.checkForWin();
@@ -275,12 +293,12 @@ export default class Hex extends Phaser.GameObjects.Polygon {
         while (loop) {
             if(index === this.lastSpawnIndex) loop = false;
             const hex = this.adjacentHexes[index];
-            if(hex.units.length < 10 || hex.units.some(unit => unit.owned !== this.state.owned)) {
-                const unit = this.scene.add.existing(new Unit(this.scene, this.state.owned, {
+            if(hex.logic.units.length < 10 || hex.logic.units.some(unit => unit.logic.owned !== this.logic.owned)) {
+                const unit = this.scene.add.existing(new Unit(this.scene, this.logic.owned, {
                     x: 0,
                     y: 0
-                }, 5, this.state.owned.color))
-                this.units.push(unit);
+                }, 5, this.logic.owned.color))
+                this.logic.units.push(unit);
                 unit.addToHex(this);
                 unit.setLogicPosition(this);
                 unit.setPosition(this.x, this.y);
@@ -307,7 +325,7 @@ export default class Hex extends Phaser.GameObjects.Polygon {
     createHealthBar() {
         this.healthBar = this.scene.add.rectangle(
             this.x-this.healthBarWidth/2, this.y-this.healthBarHeight/2, 
-            this.healthBarWidth*this.health/this.maxHealth, this.healthBarHeight,
+            this.healthBarWidth*this.logic.health/this.maxHealth, this.healthBarHeight,
             0x00ff00, 1
         ).setOrigin(0).setStrokeStyle(3, 0x000000, 1).setClosePath(true);
     }
@@ -332,7 +350,7 @@ export default class Hex extends Phaser.GameObjects.Polygon {
     }   
 
     logicUpdate() {
-        if(this.state.owned) {
+        if(this.logic.owned) {
             if(this.ownedLastUpdate >= 10) {
                 this.spawnUnit();
                 this.ownedLastUpdate = 0;

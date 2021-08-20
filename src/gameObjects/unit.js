@@ -2,6 +2,7 @@ import Phaser from 'phaser';
 import Perspective from '../util/perspective';
 
 export default class Unit extends Phaser.GameObjects.Container {
+    static nextUnitId = 0;
     /**
      * Creates a new Unit
      * 
@@ -14,6 +15,7 @@ export default class Unit extends Phaser.GameObjects.Container {
         startingPos = scene.map.mapToScreenCoordinates(startingPos.x, startingPos.y)
         super(scene, startingPos.x, startingPos.y)
 
+        this.id = Unit.nextUnitId++;
         this.owned = player;
         player.ownedUnits++;
 
@@ -21,24 +23,24 @@ export default class Unit extends Phaser.GameObjects.Container {
         this.hexSlot = null;
 
         this.selectable = true;
-        this.shouldUpdate = false;
-        this.logicShouldUpdate = false;
 
-        this.prevLogic = null;
+        //this.prevLogic = null;
         this.logic = {
+            id: this.id,
             x: startingPos.x,
-            y: startingPos.y
+            y: startingPos.y,
+            shouldUpdate: false,
+            logicShouldUpdate: false,
+            attack: 1,
+            health: 1,
+            dying: -1,
+            moving: false,
+            destination: null,
+            destinationHex: null,
+            arriveNextUpdate: false
         }
 
-        this.attack = 1;
-        this.health = 1;
-        this.dying = -1;
-
         this.moveSpeed = 10;
-        this.moving = false;
-        this.destination = null;
-        this.destinationHex = null;
-        this.arriveNextUpdate = false;
         
         this.color = color ? color : 0xffffff;
         this.createSprite(scale);
@@ -48,6 +50,16 @@ export default class Unit extends Phaser.GameObjects.Container {
         this.setLogicPosition = this.setLogicPosition.bind(this);
         this.logicUpdate = this.logicUpdate.bind(this);
         this.sendTo = this.sendTo.bind(this);
+    }
+
+    save() {
+        const obj = {
+            ...this.logic,
+            destinationHex: this.logic.destinationHex 
+                    ? this.logic.destinationHex.id : null
+        };
+        console.log(obj)
+        return obj
     }
 
     setLogicPosition(pos) {
@@ -65,9 +77,9 @@ export default class Unit extends Phaser.GameObjects.Container {
 
     sendTo(destination) {
         this.logicShouldUpdate = true;
-        this.destination = destination;
-        this.destinationHex = this.scene.map.getHexAt(destination);
-        this.moving = true;
+        this.logic.destination = destination;
+        this.logic.destinationHex = this.scene.map.getHexAt(destination);
+        this.logic.moving = true;
     }
 
     /**
@@ -82,12 +94,12 @@ export default class Unit extends Phaser.GameObjects.Container {
     }
 
     fight(unit) {
-        unit.health -= this.attack;
-        this.health -= unit.attack;
-        if(unit.health <= 0) {
+        unit.logic.health -= this.logic.attack;
+        this.logic.health -= unit.logic.attack;
+        if(unit.logic.health <= 0) {
             unit.kill(this);
         }
-        if(this.health <= 0) {
+        if(this.logic.health <= 0) {
             this.kill(unit);
         }
     }
@@ -112,40 +124,40 @@ export default class Unit extends Phaser.GameObjects.Container {
         this.selectable = false;
         if(this.hex && this.hex.active) 
             this.hex.removeUnit(this);
-        this.dying = 0;
-        this.logicShouldUpdate = true;
+        this.logic.dying = 0;
+        this.logic.logicShouldUpdate = true;
         this.scene.checkForWin();
         if(killedBy) 
-            this.destination = this.getFightDestination(killedBy);
+            this.logic.destination = this.getFightDestination(killedBy);
         else 
             this.dead = true;
     }
 
     stopMoving() {
-        this.destination = null;
-        this.destinationHex = null;
-        this.moving = false;
-        this.arriveNextUpdate = false;
+        this.logic.destination = null;
+        this.logic.destinationHex = null;
+        this.logic.moving = false;
+        this.logic.arriveNextUpdate = false;
     }
     
     arrive() {
         if(this.hexSlot === null) {
-            this.arriveNextUpdate = false;
+            this.logic.arriveNextUpdate = false;
             this.hex.arriveUnit(this);
             return;
         }
-        this.logic.x = this.destination.x;
-        this.logic.y = this.destination.y;
-        this.shouldUpdate = false;
+        this.logic.x = this.logic.destination.x;
+        this.logic.y = this.logic.destination.y;
+        this.logic.shouldUpdate = false;
         this.stopMoving();
     }
 
     moveStep() {
-        const dx = this.destination.x - this.logic.x
-        const dy = this.destination.y - this.logic.y
+        const dx = this.logic.destination.x - this.logic.x
+        const dy = this.logic.destination.y - this.logic.y
 
         if(Math.abs(dx) <= this.moveSpeed && Math.abs(dy) <= this.moveSpeed) {
-            this.arriveNextUpdate = true;
+            this.logic.arriveNextUpdate = true;
         }
 
         const angle = Math.atan(Math.abs(dy/dx));
@@ -160,26 +172,26 @@ export default class Unit extends Phaser.GameObjects.Container {
             const added = hex.addUnit(this);
             if(!added) {
                 this.hex.arriveUnit(this);
-            } else if(added && hex === this.destinationHex) {
+            } else if(added && hex === this.logic.destinationHex) {
                 hex.arriveUnit(this);
             }
         }
     }
 
     logicUpdate() {
-        if(this.dying >= 0) {
-            if(this.arriveNextUpdate) {
-                this.logic.x = this.destination.x;
-                this.logic.y = this.destination.y;
+        if(this.logic.dying >= 0) {
+            if(this.logic.arriveNextUpdate) {
+                this.logic.x = this.logic.destination.x;
+                this.logic.y = this.logic.destination.y;
                 this.fighting = true;
                 this.fightingTimer = 0;
-                this.arriveNextUpdate = false;
-            } else if (this.dead && this.dying >= 5) {
-                this.dying = -1;
-                this.logicShouldUpdate = false;
+                this.logic.arriveNextUpdate = false;
+            } else if (this.dead && this.logic.dying >= 5) {
+                this.logic.dying = -1;
+                this.logic.logicShouldUpdate = false;
                 this.destroy();
             } else if (this.dead) {
-                this.dying++;
+                this.logic.dying++;
                 this.getAll().forEach(child => child.setFillStyle(child.fillColor, child.fillAlpha-.02))
             } else if (this.fighting) {
                 this.fightingTimer++;
@@ -194,8 +206,8 @@ export default class Unit extends Phaser.GameObjects.Container {
                 this.moveStep();
             }
         }
-        if(this.moving) {
-            if(this.arriveNextUpdate) {
+        if(this.logic.moving) {
+            if(this.logic.arriveNextUpdate) {
                 this.arrive();
             } else {
                 this.moveStep();
