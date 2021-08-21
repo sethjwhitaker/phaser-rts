@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import Map from '../gameObjects/map';
 import Player from '../gameObjects/player';
+import Unit from '../gameObjects/unit';
 import GameClock from '../util/game_clock';
 
 /**
@@ -23,6 +24,7 @@ export default class GameScene extends Phaser.Scene {
         this.startZoom1 = false;
         this.startZoom2 = false;
         this.ui = [];
+        this.unitScale = 5;
 
         this.inputBuffer = [];
         this.gameClock = null;
@@ -495,6 +497,19 @@ export default class GameScene extends Phaser.Scene {
             this.logicUpdates.push(item);
     }
 
+    loadLogicFrame(number) {
+        const frame = this.prevLogicFrames.find(f => {
+            return JSON.parse(f).number == number
+        })
+
+        if(!frame) return;
+
+        Unit.loadUnits(this, frame.units, frame.unitNextId);
+        this.map.load(frame.hexes);
+        this.player.load(frame.player);
+        this.otherPlayer.load(frame.otherPlayer);
+    }
+
     saveLogicFrame(){
         const logicFrame = {
             number: this.logicFramesSinceStart,
@@ -503,13 +518,13 @@ export default class GameScene extends Phaser.Scene {
             inputs: this.inputBuffer.filter(inp => {
                 inp.frame == this.logicFramesSinceStart
             }),
+            unitNextId: Unit.nextUnitId,
             units: this.children.getChildren().filter(child => child.constructor.name == "Unit")
                     .map(unit => unit.save()),
             hexes: this.map.getAll().map(hex => hex.save())
         };
-        console.log(logicFrame)
         this.prevLogicFrames.push(JSON.stringify(logicFrame));
-        console.log(this.prevLogicFrames[this.prevLogicFrames.length-1])
+        this.prevLogicFrames.splice(0, 1);
     }
 
     logicUpdate() {

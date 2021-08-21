@@ -59,6 +59,12 @@ export default class Map extends Phaser.GameObjects.Container {
         this.startingPositions = hexagonMap.startingPositions;
     }
 
+    load(hexFrames) {
+        hexFrames.forEach(frame => {
+            this.getHex(frame.id).load(frame)
+        })
+    }
+
     /**
      * Returns the origin of the map
      * 
@@ -94,6 +100,11 @@ export default class Map extends Phaser.GameObjects.Container {
             if(hexes[i].encapsulates(location)) return hexes[i]
         }
         return null;
+    }
+
+    getHex(id) {
+        const hexes = this.getAll("id", id);
+        return hexes[0];
     }
 
     /**

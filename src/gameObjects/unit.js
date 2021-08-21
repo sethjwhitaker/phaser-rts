@@ -52,13 +52,53 @@ export default class Unit extends Phaser.GameObjects.Container {
         this.sendTo = this.sendTo.bind(this);
     }
 
+    static createFromFrame(scene, frame) {
+        const player = scene.player.id == frame.owned ? scene.player : scene.otherPlayer;
+        const newUnit = new Unit(
+            scene, 
+            player,
+            {x: frame.x, y: frame.y},
+            scene.unitScale,
+            player.color
+        )
+        newUnit.load(frame);
+        scene.add.existing(newUnit)
+    }
+
+    static loadUnits(scene, frameUnits, nextUnitId) {
+        const sceneUnits = scene.children.getChildren().filter(child => child.constructor.name == "Unit");
+
+        // Load nextUnitId
+        Unit.nextUnitId = nextUnitId;
+
+
+        frameUnits.forEach((frame, index) => {
+            if(index < sceneUnits.length)
+                sceneUnits[index].load(frame)
+            else
+                Unit.createFromFrame(scene, frame);
+        })
+
+        // Delete extra Units
+        if(sceneUnits.length > frameUnits.length) {
+            for(var i = sceneUnits.length; i > frameUnits.length; i--);
+            sceneUnits[i-1].destroy(); // Make sure to clean up player owned units
+        } 
+    }
+
+    load(frame) {
+        this.logic = frame;
+        if(this.logic.destinationHex !== null) {
+            this.scene.map.getHex(this.logic.destinationHex);
+        }
+    }
+
     save() {
         const obj = {
             ...this.logic,
             destinationHex: this.logic.destinationHex 
                     ? this.logic.destinationHex.id : null
         };
-        console.log(obj)
         return obj
     }
 

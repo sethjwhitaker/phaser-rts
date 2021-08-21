@@ -25,7 +25,6 @@ export default class Player extends Phaser.GameObjects.Group {
             selected: this.selected.map(unit => unit.id),
             selectedHex: this.slectedHex ? this.selectedHex.id : null
         }
-        console.log(obj)
         return obj
     }
 
