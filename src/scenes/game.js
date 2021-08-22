@@ -31,7 +31,7 @@ export default class GameScene extends Phaser.Scene {
         this.logicUpdates = [];
         this.prevLogicFrames = [];
         this.logicFramesSinceStart = 0;
-        this.logicFrameDelay = 1000;
+        this.logicFrameDelay = 100;
 
         this.startGameHandler = this.startGameHandler.bind(this);
         this.select = this.select.bind(this);
@@ -250,6 +250,7 @@ export default class GameScene extends Phaser.Scene {
             this.sys.game.scale.gameSize.height/2,
             "GAME START!!!!!!"
         )
+        setTimeout(this.startText.destroy, 5000);
     }
 
     drag(e) {
@@ -272,7 +273,6 @@ export default class GameScene extends Phaser.Scene {
     select(player, rect) {
         console.log("select")
         player.selected = this.children.getChildren().filter(object => {
-            console.log(object.selectable)
             if(object.selectable && object.owned === player &&
                 ((object.x >= rect.x && object.x <= rect.x+rect.width) ||
                 (object.x <=rect.x && object.x >= rect.x+rect.width)) &&
@@ -498,12 +498,16 @@ export default class GameScene extends Phaser.Scene {
     }
 
     loadLogicFrame(number) {
-        const frame = this.prevLogicFrames.find(f => {
+        console.log("LOAD LOGIC FRAME")
+        const string = this.prevLogicFrames.find(f => {
             return JSON.parse(f).number == number
         })
+        console.log(string)
+        const frame = JSON.parse(string)
 
         if(!frame) return;
 
+        console.log(frame)
         Unit.loadUnits(this, frame.units, frame.unitNextId);
         this.map.load(frame.hexes);
         this.player.load(frame.player);
@@ -524,13 +528,27 @@ export default class GameScene extends Phaser.Scene {
             hexes: this.map.getAll().map(hex => hex.save())
         };
         this.prevLogicFrames.push(JSON.stringify(logicFrame));
-        this.prevLogicFrames.splice(0, 1);
+        if(this.prevLogicFrames.length > 10) 
+            this.prevLogicFrames.splice(0, 1);
     }
 
     logicUpdate() {
-        console.log(this.logicFramesSinceStart)
+        //console.log(this.logicFramesSinceStart)
         this.saveLogicFrame();
 
+        /*if(this.logicFramesSinceStart == 19) {
+            this.loadLogicFrame(this.logicFramesSinceStart-5)
+            this.saveLogicFrame()
+            console.log(JSON.parse(this.prevLogicFrames[this.prevLogicFrames.length-1]))
+
+            //clearInterval(this.logicInterval)
+
+            this.logicFramesSinceStart++;
+            return
+        }*/
+        if(this.logicFramesSinceStart == 25) {
+            //clearInterval(this.logicInterval)
+        }
         var toRemove = [];
         this.inputBuffer.forEach((input, index) => {
             if(!input.activated) {
@@ -578,6 +596,10 @@ export default class GameScene extends Phaser.Scene {
                     this.gameClock.sync(this.peerConnection);
                 }, 10000)*/
             }
+        } else {
+            this.gameClock = new GameClock();
+            const startTime = this.gameClock.time() + 1000;
+            document.body.dispatchEvent(new CustomEvent("startGame", {detail: startTime}))
         }
         
     }

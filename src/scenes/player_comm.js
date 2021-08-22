@@ -25,7 +25,8 @@ export default class PlayerComm extends Phaser.Scene {
             type: "select", 
             rect: rect
         }
-        this.sendInput(inputObj);
+        if(this.peerConnection)
+            this.sendInput(inputObj);
         this.localInput(inputObj);
     }
 
@@ -35,7 +36,8 @@ export default class PlayerComm extends Phaser.Scene {
             type: "move",
             pos: pos
         }
-        this.sendInput(inputObj);
+        if(this.peerConnection)
+            this.sendInput(inputObj);
         this.localInput(inputObj);
     }
 

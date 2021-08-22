@@ -60,6 +60,7 @@ export default class Map extends Phaser.GameObjects.Container {
     }
 
     load(hexFrames) {
+        console.log(hexFrames)
         hexFrames.forEach(frame => {
             this.getHex(frame.id).load(frame)
         })
@@ -104,6 +105,7 @@ export default class Map extends Phaser.GameObjects.Container {
 
     getHex(id) {
         const hexes = this.getAll("id", id);
+        if(hexes.length === 0) return null;
         return hexes[0];
     }
 

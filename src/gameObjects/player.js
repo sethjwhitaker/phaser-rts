@@ -16,13 +16,28 @@ export default class Player extends Phaser.GameObjects.Group {
 
         this.selected = [];
         this.selectedHex = null;
+
+        this.load = this.load.bind(this);
+        this.save = this.save.bind(this)
+    }
+
+    load(frame) {
+        this.ownedHexes = frame.ownedHexes;
+        this.ownedUnits = frame.ownedUnits;
+        this.selected = frame.selected.map(id => {
+            this.scene.children.getChildren().find(child => {
+                return child.constructor.name == "Unit" && child.id == id;
+            })
+        })
+        this.selectedHex = this.scene.map.getHex(frame.selectedHex)
     }
 
     save() {
         const obj = {
             ownedHexes: this.ownedHexes,
             ownedUnits: this.ownedUnits,
-            selected: this.selected.map(unit => unit.id),
+            selected: this.selected ? 
+                    this.selected.map(unit => unit.id) : null,
             selectedHex: this.slectedHex ? this.selectedHex.id : null
         }
         return obj

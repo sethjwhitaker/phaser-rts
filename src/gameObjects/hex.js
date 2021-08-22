@@ -76,28 +76,41 @@ export default class Hex extends Phaser.GameObjects.Polygon {
         this.encapsulates = this.encapsulates.bind(this);
         this.addUnit = this.addUnit.bind(this);
         this.addUnits = this.addUnits.bind(this);
+        this.load = this.load.bind(this);
+        this.save = this.save.bind(this);
     }
 
     load(frame) {
+       // console.log("LOAD HEX")
+        //console.log(frame)
         this.logic = frame;
 
+        console.log(this.id);
+        if(this.id == 0)
+            console.log(frame.slotsInUse)
         // slotsInUse []
         const newArr = [];
         for(var i = 0; i < this.numSlots; i++) {
-            newArr.push(this.logic.slotsInUse.contains(i) ? true : false)
+            newArr.push(this.logic.slotsInUse.includes(i) ? true : false)
         }
         this.logic.slotsInUse = newArr;
+        if(this.id == 16)
+            console.log(this.logic.slotsInUse)
 
         // units []
         this.logic.units = this.logic.units.map(id => {
-            this.scene.children.getChildren().find(child => {
+            return this.scene.children.getChildren().find(child => {
                 return child.constructor.name == "Unit" && child.id == id;
             })
         })
 
         // owned
-        this.logic.owned = this.scene.player.id == this.logic.owned 
-                ? this.scene.player : this.scene.otherPlayer;
+        if(this.logic.owned !== null) {
+            this.logic.owned = this.scene.player.id === this.logic.owned 
+                    ? this.scene.player : this.scene.otherPlayer;
+        }
+
+        //console.log(this.logic)
     }
 
     save() {
@@ -109,7 +122,8 @@ export default class Hex extends Phaser.GameObjects.Polygon {
                 slot !== false
             }),
             units: this.logic.units.map(unit => unit.id),
-            owned: this.logic.owned ? this.logic.owned.id : null
+            owned: this.logic.owned !== null ? this.logic.owned.id : null,
+            id: this.id
         }
         return obj
     }
@@ -157,7 +171,7 @@ export default class Hex extends Phaser.GameObjects.Polygon {
         }*/
 
         if(this.logic.units.length > 0) {
-            if(unit.owned != this.logic.units[0].logic.owned) {
+            if(unit.owned != this.logic.units[0].owned) {
                 unit.fight(this.logic.units[0]);
                 return true;
             }
@@ -167,7 +181,7 @@ export default class Hex extends Phaser.GameObjects.Polygon {
             return false;
         }
         
-        if(this.logic.owned !== null && this.logic.owned !== unit.logic.owned) {
+        if(this.logic.owned !== null && this.logic.owned !== unit.owned) {
             this.attack(unit);
             return true;
         }
@@ -200,9 +214,14 @@ export default class Hex extends Phaser.GameObjects.Polygon {
     }
 
     assignSlot(unit) {
+        console.log(this.id)
+        console.log(this.logic.slotsInUse)
         var index = this.logic.slotsInUse.indexOf(false);
+        if(index < 0)
+            return // make it so units arriving at a full hex get directed elsewhere
+
         var closestDistance = this.calculateDistance(
-            unit, 
+            unit.logic, 
             {
                 x: this.x+this.unitSlots[2*index],
                 y: this.y+this.unitSlots[2*index+1]
@@ -211,7 +230,7 @@ export default class Hex extends Phaser.GameObjects.Polygon {
         for(var i = index+1; i < this.logic.slotsInUse.length; i++) {
             if(!this.logic.slotsInUse[i]) {
                 const d = this.calculateDistance(
-                    unit, 
+                    unit.logic, 
                     {
                         x: this.x+this.unitSlots[2*i],
                         y: this.y+this.unitSlots[2*i+1]
@@ -224,7 +243,7 @@ export default class Hex extends Phaser.GameObjects.Polygon {
             }
         }
         this.logic.slotsInUse[index] = true;
-        unit.hexSlot = index;
+        unit.logic.hexSlot = index;
         unit.sendTo({x: this.x+this.unitSlots[2*index], y: this.y+this.unitSlots[2*index+1]})
     }
 
@@ -265,7 +284,7 @@ export default class Hex extends Phaser.GameObjects.Polygon {
 
     attack(unit) {
         if(this.logic.health > 0) {
-            this.logic.health -= unit.attack;
+            this.logic.health -= unit.logic.attack;
             unit.kill();
             this.updateHealthBar();
         } else {
@@ -314,7 +333,7 @@ export default class Hex extends Phaser.GameObjects.Polygon {
         while (loop) {
             if(index === this.logic.lastSpawnIndex) loop = false;
             const hex = this.adjacentHexes[index];
-            if(hex.logic.units.length < 10 || hex.logic.units.some(unit => unit.logic.owned !== this.logic.owned)) {
+            if(hex.logic.units.length < 10 || hex.logic.units.some(unit => unit.owned !== this.logic.owned)) {
                 const unit = this.scene.add.existing(new Unit(this.scene, this.logic.owned, {
                     x: 0,
                     y: 0
