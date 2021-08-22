@@ -88,24 +88,20 @@ export default class Hex extends Phaser.GameObjects.Polygon {
        // console.log("LOAD HEX")
         //console.log(frame)
         this.logic = frame;
-
-        console.log(this.id);
-        if(this.id == 0)
-            console.log(frame.slotsInUse)
         // slotsInUse []
         const newArr = [];
         for(var i = 0; i < this.numSlots; i++) {
             newArr.push(this.logic.slotsInUse.includes(i) ? true : false)
         }
         this.logic.slotsInUse = newArr;
-        if(this.id == 16)
-            console.log(this.logic.slotsInUse)
 
         // units []
         this.logic.units = this.logic.units.map(id => {
-            return this.scene.children.getChildren().find(child => {
+            const u = this.scene.children.getChildren().find(child => {
                 return child.constructor.name == "Unit" && child.id == id;
             })
+            if(u === undefined) console.log(id + " is undefined")
+            return u;
         })
 
         // owned

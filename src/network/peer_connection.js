@@ -117,6 +117,7 @@ export default class PeerConnection {
      * @param {Object} input
      */
     sendInput(input) {
-        this.connection.send(`input ${JSON.stringify(input)}`);
+        console.log(input);
+        this.connection.send(`input ${input}`);
     }
 }

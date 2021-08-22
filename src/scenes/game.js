@@ -31,7 +31,7 @@ export default class GameScene extends Phaser.Scene {
         this.logicUpdates = [];
         this.prevLogicFrames = [];
         this.logicFramesSinceStart = 0;
-        this.logicFrameDelay = 100;
+        this.logicFrameDelay = 400;
 
         this.startGameHandler = this.startGameHandler.bind(this);
         this.select = this.select.bind(this);
@@ -224,24 +224,9 @@ export default class GameScene extends Phaser.Scene {
     ----------------------------------------------------------------------
     */
 
-    playerInput(player, input) { 
-        input.player = player ? player : this.player;
-        input.activated = false;
-        this.inputBuffer.push(input);
-    }
+    
 
-    activateInput(input) {
-        switch(input.type) {
-            case "select":
-                console.log("Select my guy")
-                this.select(input.player, input.rect);
-                break;
-            case "move":
-                this.move(input.player, input.pos);
-                break;
-        }
-        input.activated = true;
-    }
+    
 
     startGame() {
         this.logicInterval = setInterval(this.logicUpdate, this.logicFrameDelay);
@@ -506,6 +491,49 @@ export default class GameScene extends Phaser.Scene {
     ----------------------------------------------------------------------
     */
 
+    playerInput(player, input) { 
+        input.player = player ? player : this.player;
+        input.activated = false;
+        this.inputBuffer.push(input);
+    }
+
+    activateInput(input) {
+        switch(input.type) {
+            case "select":
+                console.log("Select my guy")
+                this.select(input.player, input.rect);
+                break;
+            case "move":
+                this.move(input.player, input.pos);
+                break;
+        }
+        input.activated = true;
+    }
+
+    lateInput(input) {
+        // Number of frames to simulate
+        const numFrames = this.logicFramesSinceStart-input.frame;
+
+        // Deactivate all inputs after start frame
+        this.inputBuffer.forEach(inp => {
+            if(inp.frame >= input.frame) {
+                inp.activated = false;
+            }
+        })
+
+        // Load frame before input
+        this.loadLogicFrame(input.frame);
+
+        console.log("LOGIC FRAME LOADED")
+        // Recalculate logic updates
+        for(var i = 0; i < numFrames; i++) {
+            console.log("RECALCULATING FRAME " + i)
+            this.logicUpdate();
+        }
+
+        // input.activated = true; // Hopefully not necessary
+    }
+
     addToLogicUpdate(item) {
         if(item.logicUpdate) 
             this.logicUpdates.push(item);
@@ -516,16 +544,15 @@ export default class GameScene extends Phaser.Scene {
         const string = this.prevLogicFrames.find(f => {
             return JSON.parse(f).number == number
         })
-        console.log(string)
         const frame = JSON.parse(string)
 
         if(!frame) return;
 
-        console.log(frame)
         Unit.loadUnits(this, frame.units, frame.unitNextId);
         this.map.load(frame.hexes);
         this.player.load(frame.player);
         this.otherPlayer.load(frame.otherPlayer);
+        this.logicFramesSinceStart = number;
     }
 
     saveLogicFrame(){
@@ -547,8 +574,10 @@ export default class GameScene extends Phaser.Scene {
     }
 
     logicUpdate() {
-        //console.log(this.logicFramesSinceStart)
+        console.log(this.logicFramesSinceStart)
         this.saveLogicFrame();
+
+        
 
         /*if(this.logicFramesSinceStart == 19) {
             this.loadLogicFrame(this.logicFramesSinceStart-5)
@@ -572,13 +601,12 @@ export default class GameScene extends Phaser.Scene {
                     this.activateInput(input);
                 } else if(input.frame < this.logicFramesSinceStart) {
                     console.log("input is late")
-                    if(input.frame < this.logicFramesSinceStart-10) {
-                        toRemove.push(index);
-                    }
+                    this.lateInput(input);
                 } else {
                     console.log("input is early")
                 }
             } else {
+                console.log(input)
                 if(input.frame < this.logicFramesSinceStart-10) {
                     toRemove.push(index);
                 }

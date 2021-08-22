@@ -14,7 +14,7 @@ export default class Player extends Phaser.GameObjects.Group {
         this.ownedHexes = 0;
         this.ownedUnits = 0;
 
-        this.selected = [];
+        this.selected = null;
         this.selectedHex = null;
 
         this.load = this.load.bind(this);
@@ -24,11 +24,11 @@ export default class Player extends Phaser.GameObjects.Group {
     load(frame) {
         this.ownedHexes = frame.ownedHexes;
         this.ownedUnits = frame.ownedUnits;
-        this.selected = frame.selected.map(id => {
-            this.scene.children.getChildren().find(child => {
+        this.selected = frame.selected ? frame.selected.map(id => {
+            return this.scene.children.getChildren().find(child => {
                 return child.constructor.name == "Unit" && child.id == id;
             })
-        })
+        }) : null;
         this.selectedHex = this.scene.map.getHex(frame.selectedHex)
     }
 

@@ -55,6 +55,7 @@ export default class Unit extends Phaser.GameObjects.Container {
     }
 
     static createFromFrame(scene, frame) {
+        console.log("Need to create units")
         const player = scene.player.id == frame.owned ? scene.player : scene.otherPlayer;
         const newUnit = new Unit(
             scene, 
@@ -84,8 +85,12 @@ export default class Unit extends Phaser.GameObjects.Container {
 
         // Delete extra Units
         if(sceneUnits.length > frameUnits.length) {
-            for(var i = sceneUnits.length; i > frameUnits.length; i--);
-            sceneUnits[i-1].destroy(); // Make sure to clean up player owned units
+            console.log("Need to delete units")
+            for(var i = sceneUnits.length; i > frameUnits.length; i--) {
+                console.log(sceneUnits[i-1].id)
+                sceneUnits[i-1].destroy(); // Make sure to clean up player owned units
+            }
+            
         } 
     }
 
@@ -98,8 +103,6 @@ export default class Unit extends Phaser.GameObjects.Container {
         if(this.logic.hex !== null) {
             this.logic.hex = this.scene.map.getHex(this.logic.hex);
         }
-        console.log(frame)
-        console.log(this.logic)
     }
 
     save() {
