@@ -27,7 +27,7 @@ export default class PlayerComm extends Phaser.Scene {
             rect: rect
         }
         if(this.peerConnection)
-            this.sendInput(JSON.stringify(inputObj));
+            this.sendInput(inputObj);
         this.localInput(inputObj);
     }
 
@@ -38,7 +38,7 @@ export default class PlayerComm extends Phaser.Scene {
             pos: pos
         }
         if(this.peerConnection)
-            this.sendInput(JSON.stringify(inputObj));
+            this.sendInput(inputObj);
         this.localInput(inputObj);
     }
 
@@ -66,10 +66,7 @@ export default class PlayerComm extends Phaser.Scene {
     }
 
     sendInput(input) {
-        setTimeout(() => { // THis timeout is just for testing LAG MAKE SURE TO REMOVE
-            this.peerConnection.sendInput(input)
-        }, 600)
-        
+        this.peerConnection.sendInput(JSON.stringify(input))
     }
 
     

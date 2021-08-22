@@ -31,7 +31,7 @@ export default class GameScene extends Phaser.Scene {
         this.logicUpdates = [];
         this.prevLogicFrames = [];
         this.logicFramesSinceStart = 0;
-        this.logicFrameDelay = 400;
+        this.logicFrameDelay = 300;
 
         this.startGameHandler = this.startGameHandler.bind(this);
         this.select = this.select.bind(this);
