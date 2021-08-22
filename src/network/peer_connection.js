@@ -58,23 +58,30 @@ export default class PeerConnection {
                 if(data.substr(0, 4) === "chat") {
                     document.body.dispatchEvent(new CustomEvent("chatReceived", {detail: data.substr(5)}));
                 } else if (data.substr(0, 7) === "syncreq") {
-                    const receivedTime = data.substr(8);
-                    console.log(receivedTime)
                     this.sendSyncResponse(currentTime);
                 } else if (data.substr(0, 7) === "syncres") {
                     const res = data.substr(8);
-                    console.log(res)
                     const resData = JSON.parse(res);
                     resData.push(currentTime)
                     document.body.dispatchEvent(new CustomEvent("syncResponse", {detail: resData}));
+                } else if (data.substr(0, 9) === "startgame") {
+                    const req = data.substr(10);
+                    document.body.dispatchEvent(new CustomEvent("startGame", {detail: req}))
                 } else if (data.substr(0, 4) === "name") {
                     document.body.dispatchEvent(new CustomEvent("nameReceived", {detail: data.substr(5)}));
                 } else if (data.substr(0, 5) === "input") {
                     document.body.dispatchEvent(new CustomEvent("inputReceived", {detail: data.substr(6)}))
                 }
             });
-            
         });
+    }
+
+    close() {
+        this.connection.close();
+    }
+ 
+    sendGameStart(time) {
+        this.connection.send(`startgame ${time}`)
     }
 
     sendSyncResponse(time) {
@@ -84,7 +91,7 @@ export default class PeerConnection {
     }
 
     sendSyncRequest(time) {
-        this.connection.send(`syncreq ${time}`)
+        this.connection.send(`syncreq`)
     }
 
     /**
@@ -110,6 +117,7 @@ export default class PeerConnection {
      * @param {Object} input
      */
     sendInput(input) {
-        this.connection.send(`input ${JSON.stringify(input)}`);
+        console.log(input);
+        this.connection.send(`input ${input}`);
     }
 }

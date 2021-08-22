@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import Map from '../gameObjects/map';
 import Player from '../gameObjects/player';
+import Unit from '../gameObjects/unit';
 import GameClock from '../util/game_clock';
 
 /**
@@ -21,15 +22,27 @@ export default class GameScene extends Phaser.Scene {
         this.lastChange = null;
         this.selectRect = null;
         this.startZoom1 = false;
-        this.statyZoom2 = false;
+        this.startZoom2 = false;
         this.ui = [];
+        this.unitScale = 5;
 
+        this.inputBuffer = [];
+        this.gameClock = null;
+        this.logicUpdates = [];
+        this.prevLogicFrames = [];
+        this.logicFramesSinceStart = 0;
+        this.logicFrameDelay = 300;
+
+        this.startGameHandler = this.startGameHandler.bind(this);
         this.select = this.select.bind(this);
         this.move = this.move.bind(this);
         this.pointerMoveHandler = this.pointerMoveHandler.bind(this);
         this.pointerUpHandler = this.pointerUpHandler.bind(this);
         this.finishSelect = this.finishSelect.bind(this);
         this.click = this.click.bind(this);
+        this.saveLogicFrame = this.saveLogicFrame.bind(this);
+        this.addToLogicUpdate = this.addToLogicUpdate.bind(this);
+        this.logicUpdate = this.logicUpdate.bind(this);
     }
 
     /* 
@@ -142,6 +155,7 @@ export default class GameScene extends Phaser.Scene {
         this.input.on("pointermove", this.pointerMoveHandler)
         this.input.on("pointerup", this.pointerUpHandler)
         this.input.on("wheel", this.mouseWheelHandler)
+        document.body.addEventListener("startGame", this.startGameHandler)
     }
 
     /*
@@ -197,11 +211,33 @@ export default class GameScene extends Phaser.Scene {
         this.cameras.main.setZoom(zoom);
     }
 
+    startGameHandler(e) {
+        const timeout = e.detail - this.gameClock.time();
+        setTimeout(() => {
+            this.startGame();
+        }, timeout);
+    }
+
     /*
     ----------------------------------------------------------------------
                             Controls
     ----------------------------------------------------------------------
     */
+
+    
+
+    
+
+    startGame() {
+        this.logicInterval = setInterval(this.logicUpdate, this.logicFrameDelay);
+        this.startText = this.add.text(
+            this.sys.game.scale.gameSize.width/2,
+            this.sys.game.scale.gameSize.height/2,
+            "GAME START!!!!!!"
+        )
+        setTimeout(this.startText.destroy, 5000);
+    }
+
     drag(e) {
         const worldPosition = this.cameras.main.getWorldPoint(e.position.x, e.position.y);
         const worldDown = this.cameras.main.getWorldPoint(e.downX, e.downY);
@@ -218,10 +254,10 @@ export default class GameScene extends Phaser.Scene {
             }
         }
     }
+
     select(player, rect) {
         console.log("select")
         player.selected = this.children.getChildren().filter(object => {
-            console.log(object.selectable)
             if(object.selectable && object.owned === player &&
                 ((object.x >= rect.x && object.x <= rect.x+rect.width) ||
                 (object.x <=rect.x && object.x >= rect.x+rect.width)) &&
@@ -229,6 +265,17 @@ export default class GameScene extends Phaser.Scene {
                 (object.y <=rect.y && object.y >= rect.y+rect.height))
             ) return true;
         })
+        player.selected.forEach(el => el.select())
+    }
+
+    deselect(player, unit) {
+        if(player.selected) {
+            const index = player.selected.findIndex(pUnit => {
+                return pUnit === unit
+            })
+            if(index >= 0)
+                player.selected.splice(index, 1);
+        }
     }
 
     move(player, pos) {
@@ -236,9 +283,12 @@ export default class GameScene extends Phaser.Scene {
         const hex = this.map.getHexAt(pos);
         if(!hex) return;
 
+        console.log("yup")
         if(player.selected) {// player previously selected units
-            player.selected.forEach(unit => unit.moveUnit(pos))
-            //hex?.addUnits(player.selected)
+            player.selected.forEach(unit => {
+                unit.deselect(false);
+                unit.moveUnit(pos)
+            })
             player.selected = null;
         } else if (player.selectedHex !== hex) { // player previously selected a hex
             player.selectHex(hex)
@@ -295,9 +345,8 @@ export default class GameScene extends Phaser.Scene {
             height: this.selectRect.height
         }
 
-        if(this.numPlayers >1)
-            this.scene.get('player-comm').select(shape);
-        this.select(this.player, shape);
+        this.scene.get('player-comm').select(shape, this.logicFramesSinceStart+1);
+
 
         this.selectRect.destroy()
         this.selectRect = null;
@@ -306,24 +355,21 @@ export default class GameScene extends Phaser.Scene {
     click(e) {
         const pos = this.cameras.main.getWorldPoint(e.position.x, e.position.y)
 
-        if(this.numPlayers >1)
-            this.scene.get('player-comm').move(pos)
-        this.move(this.player, pos)
-    
+        this.scene.get('player-comm').move(pos, this.logicFramesSinceStart+1)
     }
 
-    selectHex(e) {
+    /*selectHex(e) {
         const pos = this.cameras.main.getWorldPoint(e.position.x, e.position.y)
 
         const hex = this.map.getHexAt(pos);
         if(hex) {
-            if(this.numPlayers >1)
-                this.scene.get('player-comm').selectHex(pos)
+            if(this.numPlayers > 1)
+                this.scene.get('player-comm').selectHex(pos, this.logicFramesSinceStart)
             this.move(this.player, pos)
         }
         
         this.player.selected = null;
-    }
+    }*/
 
     /*
     ----------------------------------------------------------------------
@@ -405,6 +451,16 @@ export default class GameScene extends Phaser.Scene {
      */
     qbhandler() {
         console.log('quit pressed')
+
+        if(this.syncInterval)
+            clearInterval(this.syncInterval);
+        if(this.logicInterval)
+            clearInterval(this.logicInterval)
+
+        if(this.peerConnection)
+            this.peerConnection.close();
+
+
         this.scene.stop('player-comm')
         this.scene.stop('chat-background')
         this.scene.stop('chat-foreground')
@@ -435,6 +491,136 @@ export default class GameScene extends Phaser.Scene {
     ----------------------------------------------------------------------
     */
 
+    playerInput(player, input) { 
+        input.player = player ? player : this.player;
+        input.activated = false;
+        this.inputBuffer.push(input);
+    }
+
+    activateInput(input) {
+        switch(input.type) {
+            case "select":
+                console.log("Select my guy")
+                this.select(input.player, input.rect);
+                break;
+            case "move":
+                this.move(input.player, input.pos);
+                break;
+        }
+        input.activated = true;
+    }
+
+    lateInput(input) {
+        // Number of frames to simulate
+        const numFrames = this.logicFramesSinceStart-input.frame;
+
+        // Deactivate all inputs after start frame
+        this.inputBuffer.forEach(inp => {
+            if(inp.frame >= input.frame) {
+                inp.activated = false;
+            }
+        })
+
+        // Load frame before input
+        this.loadLogicFrame(input.frame);
+
+        console.log("LOGIC FRAME LOADED")
+        // Recalculate logic updates
+        for(var i = 0; i < numFrames; i++) {
+            console.log("RECALCULATING FRAME " + i)
+            this.logicUpdate();
+        }
+
+        // input.activated = true; // Hopefully not necessary
+    }
+
+    addToLogicUpdate(item) {
+        if(item.logicUpdate) 
+            this.logicUpdates.push(item);
+    }
+
+    loadLogicFrame(number) {
+        console.log("LOAD LOGIC FRAME")
+        const string = this.prevLogicFrames.find(f => {
+            return JSON.parse(f).number == number
+        })
+        const frame = JSON.parse(string)
+
+        if(!frame) return;
+
+        Unit.loadUnits(this, frame.units, frame.unitNextId);
+        this.map.load(frame.hexes);
+        this.player.load(frame.player);
+        this.otherPlayer.load(frame.otherPlayer);
+        this.logicFramesSinceStart = number;
+    }
+
+    saveLogicFrame(){
+        const logicFrame = {
+            number: this.logicFramesSinceStart,
+            player: this.player.save(),
+            otherPlayer: this.otherPlayer.save(),
+            inputs: this.inputBuffer.filter(inp => {
+                inp.frame == this.logicFramesSinceStart
+            }),
+            unitNextId: Unit.nextUnitId,
+            units: this.children.getChildren().filter(child => child.constructor.name == "Unit")
+                    .map(unit => unit.save()),
+            hexes: this.map.getAll().map(hex => hex.save())
+        };
+        this.prevLogicFrames.push(JSON.stringify(logicFrame));
+        if(this.prevLogicFrames.length > 10) 
+            this.prevLogicFrames.splice(0, 1);
+    }
+
+    logicUpdate() {
+        console.log(this.logicFramesSinceStart)
+        this.saveLogicFrame();
+
+        
+
+        /*if(this.logicFramesSinceStart == 19) {
+            this.loadLogicFrame(this.logicFramesSinceStart-5)
+            this.saveLogicFrame()
+            console.log(JSON.parse(this.prevLogicFrames[this.prevLogicFrames.length-1]))
+
+            //clearInterval(this.logicInterval)
+
+            this.logicFramesSinceStart++;
+            return
+        }*/
+        if(this.logicFramesSinceStart == 25) {
+            //clearInterval(this.logicInterval)
+        }
+        var toRemove = [];
+        this.inputBuffer.forEach((input, index) => {
+            if(!input.activated) {
+                console.log(input.frame);
+                if(input.frame === this.logicFramesSinceStart) {
+                    console.log("input is on time")
+                    this.activateInput(input);
+                } else if(input.frame < this.logicFramesSinceStart) {
+                    console.log("input is late")
+                    this.lateInput(input);
+                } else {
+                    console.log("input is early")
+                }
+            } else {
+                console.log(input)
+                if(input.frame < this.logicFramesSinceStart-10) {
+                    toRemove.push(index);
+                }
+            }
+        })
+
+        for(var i = toRemove.length-1; i >=0; i--) {
+            this.inputBuffer.splice(toRemove[i], 1);
+        }
+        this.logicUpdates.forEach(item => {item.logicUpdate()})
+
+        this.logicFramesSinceStart++;
+    }
+
     /**
      * @inheritdoc
      */
@@ -446,12 +632,16 @@ export default class GameScene extends Phaser.Scene {
 
         if(this.numPlayers > 1) {
             this.gameClock = new GameClock();
-            if(this.playerId == 1) {
-                setInterval(() => {
+            if(this.playerId == 2) {
+                this.gameClock.sync(this.peerConnection);
+                /*this.syncInterval = setInterval(() => {
                     this.gameClock.sync(this.peerConnection);
-                }, 10000)
-                
+                }, 10000)*/
             }
+        } else {
+            this.gameClock = new GameClock();
+            const startTime = this.gameClock.time() + 1000;
+            document.body.dispatchEvent(new CustomEvent("startGame", {detail: startTime}))
         }
         
     }
@@ -461,13 +651,8 @@ export default class GameScene extends Phaser.Scene {
      */
     update(time, delta) {
         this.children.getChildren().forEach(child => {
-            if(child.shouldUpdate) child.update();
+            //if(child.shouldUpdate) 
+            child.update(time, delta);
         })
-        if(this.lastChange > 10) {
-            this.lastChange = 0;
-            this.map.update()
-        } else {
-            this.lastChange++;
-        }
     }
 }

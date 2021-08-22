@@ -28,6 +28,9 @@ export default class Map extends Phaser.GameObjects.Container {
         this.hexSize = 50;
         this.createHexagonMap();
 
+        this.scene.addToLogicUpdate(this);
+
+        this.logicUpdate = this.logicUpdate.bind(this);
         this.mapToScreenCoordinates = this.mapToScreenCoordinates.bind(this);
     }
 
@@ -54,6 +57,13 @@ export default class Map extends Phaser.GameObjects.Container {
         }
 
         this.startingPositions = hexagonMap.startingPositions;
+    }
+
+    load(hexFrames) {
+        console.log(hexFrames)
+        hexFrames.forEach(frame => {
+            this.getHex(frame.id).load(frame)
+        })
     }
 
     /**
@@ -93,6 +103,12 @@ export default class Map extends Phaser.GameObjects.Container {
         return null;
     }
 
+    getHex(id) {
+        const hexes = this.getAll("id", id);
+        if(hexes.length === 0) return null;
+        return hexes[0];
+    }
+
     /**
      * Gets the hexes before and after specified hex in the 
      * hexes array
@@ -116,6 +132,10 @@ export default class Map extends Phaser.GameObjects.Container {
             }
         }
         return adjacent;
+    }
+
+    logicUpdate() {
+        this.getAll().forEach(child => child.logicUpdate())
     }
 
     update() {

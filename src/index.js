@@ -18,9 +18,9 @@ const height = window.innerHeight * window.devicePixelRatio;
 const config = {
     type: Phaser.AUTO,
     scale: {
-        mode: Phaser.Scale.FIT,
-        width: width,
-        height: height,
+        mode: Phaser.Scale.NONE,
+        width: 1280,
+        height: 720,
     },
     dom: {
         createContainer: true
