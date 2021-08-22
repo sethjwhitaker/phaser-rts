@@ -100,12 +100,13 @@ export default class Unit extends Phaser.GameObjects.Container {
     }
 
     save() {
-        const obj = {
-            ...this.logic,
-            destinationHex: this.logic.destinationHex 
-                    ? this.logic.destinationHex.id : null,
-            hex: this.logic.hex ? this.logic.hex.id : null
-        };
+        const {
+            destinationHex,
+            hex,
+            ...obj
+        } = this.logic;
+        obj.destinationHex = destinationHex ? destinationHex.id : null;
+        obj.hex = hex ? hex.id : null;
         return obj
     }
 
@@ -116,13 +117,16 @@ export default class Unit extends Phaser.GameObjects.Container {
 
     moveUnit(destination) {
         if(this.logic.hexSlot !== null) {
-            this.logic.hex.logic.slotsInUse[this.logic.hexSlot] = false;
-            this.logic.hexSlot = null;
+            this.logic.hex.unassignSlot(this);
         }
         this.sendTo(destination);
     }
 
     sendTo(destination) {
+        if(isNaN(destination.x) || isNaN(destination.y)) {
+            console.log("UNDEFINED DESTINATION")
+            return;
+        }
         this.logicShouldUpdate = true;
         this.logic.destination = destination;
         this.logic.destinationHex = this.scene.map.getHexAt(destination);
@@ -188,7 +192,7 @@ export default class Unit extends Phaser.GameObjects.Container {
     }
     
     arrive() {
-        if(this.logic.hexSlot === null) {
+        if(this.logic.hexSlot === null) { // If unit just enters hex, assign a slot
             this.logic.arriveNextUpdate = false;
             this.logic.hex.arriveUnit(this);
             return;
