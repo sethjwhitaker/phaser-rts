@@ -260,20 +260,22 @@ export default class Hex extends Phaser.GameObjects.Polygon {
         unit.logic.hexSlot = null;
     }
 
-    arriveUnit(unit) {
-        if(this.logic.owned === unit.owned) {
-            this.sacrificeUnit(unit);
-            return;
+    arriveUnit(unit) { 
+        if(this.canSpawn()) {
+            if(this.logic.owned === unit.owned) {
+                this.sacrificeUnit(unit);
+                return;
+            }
+            const assigned = this.assignSlot(unit);
+            if(assigned) return;
         }
 
-        const assigned = this.assignSlot(unit);
-
-        if(!assigned) {
-            const hex = this.getOpenAdjacentHex()
-            if(hex) {
-                unit.sendTo(hex)
-            }
-        }       
+        const hex = this.getOpenAdjacentHex()
+        if(hex) {
+            unit.sendTo(hex)
+        } else {
+            unit.kill();
+        }
     }
 
     /**

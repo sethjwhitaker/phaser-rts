@@ -33,7 +33,8 @@ export default class Unit extends Phaser.GameObjects.Container {
             destinationHex: null,
             arriveNextUpdate: false,
             hex: null,
-            hexSlot: null
+            hexSlot: null,
+            selected: false
         }
 
         this.selectable = true;
@@ -49,6 +50,8 @@ export default class Unit extends Phaser.GameObjects.Container {
         this.sendTo = this.sendTo.bind(this);
         this.save = this.save.bind(this);
         this.load = this.load.bind(this);
+        this.select = this.select.bind(this);
+        this.deselect = this.deselect.bind(this);
     }
 
     static createFromFrame(scene, frame) {
@@ -108,6 +111,18 @@ export default class Unit extends Phaser.GameObjects.Container {
         obj.destinationHex = destinationHex ? destinationHex.id : null;
         obj.hex = hex ? hex.id : null;
         return obj
+    }
+
+    select() {
+        this.logic.selected = true;
+    }
+
+    deselect(sceneDeselect) {
+        if(this.logic.selected) {
+            this.logic.selected = false;
+            if(sceneDeselect !== false)
+                this.scene.deselect(this.owned, this);
+        }
     }
 
     setLogicPosition(pos) {
@@ -170,9 +185,20 @@ export default class Unit extends Phaser.GameObjects.Container {
     }
 
     kill(killedBy) {
+        /*
+            Right now, the fight animation plays after the unit dies. 
+            Make sure to change this when adding other types of units that might not die in one hit.
+        */
         this.stopMoving();
         this.owned.ownedUnits--;
+
+        /*
+            This makes a unit not selectable anymore once it is dead. What if it was selected before it
+            died though?
+        */
+        this.deselect();
         this.selectable = false;
+
         if(this.logic.hex && this.logic.hex.active) 
             this.logic.hex.removeUnit(this);
         this.logic.dying = 0;
@@ -218,12 +244,21 @@ export default class Unit extends Phaser.GameObjects.Container {
     }
 
     checkHex() {
+        // Check if unit moved into a different hex
         const hex = this.scene.map.getHexAt({ x: this.logic.x, y: this.logic.y })
+
+        // If unit moved into a different hex
         if(hex && this.logic.hex !== hex) {
+            // Try to add the unit to the hex
             const added = hex.addUnit(this);
+
+            // If it did not add
             if(!added) {
+                // Make the unit arrive at previous hex
                 this.logic.hex.arriveUnit(this);
-            } else if(added && hex === this.logic.destinationHex) {
+            } // If it got added to its destination
+            else if(added && hex === this.logic.destinationHex) {
+                // Make the unit arrive at the new hex
                 hex.arriveUnit(this);
             }
         }

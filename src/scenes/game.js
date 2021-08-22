@@ -280,6 +280,17 @@ export default class GameScene extends Phaser.Scene {
                 (object.y <=rect.y && object.y >= rect.y+rect.height))
             ) return true;
         })
+        player.selected.forEach(el => el.select())
+    }
+
+    deselect(player, unit) {
+        if(player.selected) {
+            const index = player.selected.findIndex(pUnit => {
+                return pUnit === unit
+            })
+            if(index >= 0)
+                player.selected.splice(index, 1);
+        }
     }
 
     move(player, pos) {
@@ -289,7 +300,10 @@ export default class GameScene extends Phaser.Scene {
 
         console.log("yup")
         if(player.selected) {// player previously selected units
-            player.selected.forEach(unit => unit.moveUnit(pos))
+            player.selected.forEach(unit => {
+                unit.deselect(false);
+                unit.moveUnit(pos)
+            })
             player.selected = null;
         } else if (player.selectedHex !== hex) { // player previously selected a hex
             player.selectHex(hex)
