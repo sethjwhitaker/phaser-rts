@@ -43,6 +43,7 @@ export default class Hex extends Phaser.GameObjects.Polygon {
 
         this.healthBarWidth = 50;
         this.healthBarHeight = 10;
+        this.spawnDelay = 10;
 
         this.unitSlots = Perspective.isometric2d([
             40, 45,
@@ -340,7 +341,7 @@ export default class Hex extends Phaser.GameObjects.Polygon {
         this.logic.owned = null;
         this.hideHealthBar();
         this.setFillStyle(0x49ba5f, 1);
-        this.scene.checkForWin();
+        this.scene.checkWinNextUpdate();
     }
 
     canSpawn(player) {
@@ -435,7 +436,7 @@ export default class Hex extends Phaser.GameObjects.Polygon {
 
     logicUpdate() {
         if(this.logic.owned) {
-            if(this.logic.ownedLastUpdate >= 10) {
+            if(this.logic.ownedLastUpdate >= this.spawnDelay) {
                 this.spawnUnit();
                 this.logic.ownedLastUpdate = 0;
             } else {
