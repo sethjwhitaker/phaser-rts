@@ -354,19 +354,6 @@ export default class GameScene extends Phaser.Scene {
         this.scene.get('player-comm').move(pos, this.logicFramesSinceStart+1)
     }
 
-    /*selectHex(e) {
-        const pos = this.cameras.main.getWorldPoint(e.position.x, e.position.y)
-
-        const hex = this.map.getHexAt(pos);
-        if(hex) {
-            if(this.numPlayers > 1)
-                this.scene.get('player-comm').selectHex(pos, this.logicFramesSinceStart)
-            this.move(this.player, pos)
-        }
-        
-        this.player.selected = null;
-    }*/
-
     /*
     ----------------------------------------------------------------------
                             Match End
@@ -387,7 +374,7 @@ export default class GameScene extends Phaser.Scene {
 
     draw() {
         console.log("DRAW")
-        this.add.text(
+        this.uiLayer.add(this.add.text(
             this.sys.game.scale.gameSize.width/2,
             this.sys.game.scale.gameSize.height/2,
             "DRAW.", 
@@ -396,15 +383,16 @@ export default class GameScene extends Phaser.Scene {
                 padding: {
                     x: 10, 
                     y: 10
-                }
+                },
+                backgroundColor: "#000000"
             }
-        ).setOrigin(.5)
+        ).setOrigin(.5)).setDepth(1);
     }
 
     win(player) {
         if(player === this.player) {
             console.log("YOU WIN")
-            this.add.text(
+            this.uiLayer.add(this.add.text(
                 this.sys.game.scale.gameSize.width/2,
                 this.sys.game.scale.gameSize.height/2,
                 "CONGRATULATIONS! YOU WIN!", 
@@ -413,12 +401,13 @@ export default class GameScene extends Phaser.Scene {
                     padding: {
                         x: 10, 
                         y: 10
-                    }
+                    },
+                    backgroundColor: "#000000"
                 }
-            ).setOrigin(.5)
+            ).setOrigin(.5)).setDepth(1);
         } else {
             console.log("YOU LOSE")
-            this.add.text(
+            this.uiLayer.add(this.add.text(
                 this.sys.game.scale.gameSize.width/2,
                 this.sys.game.scale.gameSize.height/2,
                 "SORRY. YOU LOSE.", 
@@ -427,9 +416,10 @@ export default class GameScene extends Phaser.Scene {
                     padding: {
                         x: 10, 
                         y: 10
-                    }
+                    },
+                    backgroundColor: "#000000"
                 }
-            ).setOrigin(.5)
+            ).setOrigin(.5)).setDepth(1);
         }
         
     }
