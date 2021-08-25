@@ -206,7 +206,7 @@ export default class Unit extends Phaser.GameObjects.Container {
             this.logic.hex.removeUnit(this);
         this.logic.dying = 0;
         this.logic.logicShouldUpdate = true;
-        this.scene.checkForWin();
+        this.scene.checkWinNextUpdate();
         if(killedBy) 
             this.logic.destination = this.getFightDestination(killedBy);
         else 

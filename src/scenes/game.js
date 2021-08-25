@@ -43,6 +43,7 @@ export default class GameScene extends Phaser.Scene {
         this.saveLogicFrame = this.saveLogicFrame.bind(this);
         this.addToLogicUpdate = this.addToLogicUpdate.bind(this);
         this.logicUpdate = this.logicUpdate.bind(this);
+        this.checkWinNextUpdate = this.checkWinNextUpdate.bind(this);
     }
 
     /* 
@@ -230,11 +231,6 @@ export default class GameScene extends Phaser.Scene {
 
     startGame() {
         this.logicInterval = setInterval(this.logicUpdate, this.logicFrameDelay);
-        this.startText = this.add.text(
-            this.sys.game.scale.gameSize.width/2,
-            this.sys.game.scale.gameSize.height/2,
-            "GAME START!!!!!!"
-        )
         setTimeout(this.startText.destroy, 5000);
     }
 
@@ -376,6 +372,10 @@ export default class GameScene extends Phaser.Scene {
                             Match End
     ----------------------------------------------------------------------
     */
+    checkWinNextUpdate() {
+        this.shouldCheckForWin = true;
+    }
+
     checkForWin() {
         console.log("CHECKING FOR WIN")
         const p1 = this.player.ownedUnits === 0 && this.player.ownedHexes === 0
@@ -618,6 +618,10 @@ export default class GameScene extends Phaser.Scene {
         }
         this.logicUpdates.forEach(item => {item.logicUpdate()})
 
+        if(this.shouldCheckForWin) {
+            this.checkForWin();
+            this.shouldCheckForWin = false;
+        }
         this.logicFramesSinceStart++;
     }
 
