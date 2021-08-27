@@ -1,9 +1,8 @@
 import Phaser from 'phaser';
 import Unit from './unit';
 import Perspective from '../util/perspective';
+import ResearchHall from './research_hall';
 
-// Units kill their team mates for some reason
-// Check if master has same issue
 /**
  * This is a GameObject representing one of the tiles.
  * 
@@ -43,7 +42,7 @@ export default class Hex extends Phaser.GameObjects.Polygon {
 
         this.healthBarWidth = 50;
         this.healthBarHeight = 10;
-        this.spawnDelay = 10;
+        this.spawnDelay = 5;
 
         this.unitSlots = Perspective.isometric2d([
             40, 45,
@@ -63,7 +62,8 @@ export default class Hex extends Phaser.GameObjects.Polygon {
             health: 0,
             owned: null,
             lastSpawnIndex: 1,
-            ownedLastUpdate: 0
+            ownedLastUpdate: 0,
+            upgradeable: false
         }
 
         this.numSlots = 10;
@@ -73,6 +73,7 @@ export default class Hex extends Phaser.GameObjects.Polygon {
         this.adjacentHexes = [];
 
         this.maxHealth = 10;
+        this.researchHall = new ResearchHall(this);
 
         this.encapsulates = this.encapsulates.bind(this);
         this.addUnit = this.addUnit.bind(this);
@@ -83,11 +84,11 @@ export default class Hex extends Phaser.GameObjects.Polygon {
         this.assignSlot = this.assignSlot.bind(this);
         this.unassignSlot = this.unassignSlot.bind(this);
         this.canSpawn = this.canSpawn.bind(this);
+        this.upgradeToResearchHall = this.upgradeToResearchHall.bind(this);
+        this.downgrade = this.downgrade.bind(this);
     }
 
     load(frame) {
-       // console.log("LOAD HEX")
-        //console.log(frame)
         this.logic = frame;
         // slotsInUse []
         const newArr = [];
@@ -110,8 +111,6 @@ export default class Hex extends Phaser.GameObjects.Polygon {
             this.logic.owned = this.scene.player.id === this.logic.owned 
                     ? this.scene.player : this.scene.otherPlayer;
         }
-
-        //console.log(this.logic)
     }
 
     save() {
@@ -220,7 +219,6 @@ export default class Hex extends Phaser.GameObjects.Polygon {
     assignSlot(unit) {
         var index = this.logic.slotsInUse.indexOf(false);
         if(index < 0) {
-            console.log("No Open Slots")
             return false // make it so units arriving at a full hex get directed elsewhere*/
         }
 
@@ -260,11 +258,14 @@ export default class Hex extends Phaser.GameObjects.Polygon {
     arriveUnit(unit) { 
         if(this.canSpawn()) {
             if(this.logic.owned === unit.owned) {
-                this.sacrificeUnit(unit);
-                return;
+                const sacrificed = this.sacrificeUnit(unit);
+                if(sacrificed)
+                    return;
+            } else {
+                const assigned = this.assignSlot(unit);
+                if(assigned) return;
             }
-            const assigned = this.assignSlot(unit);
-            if(assigned) return;
+            
         }
 
         const hex = this.getOpenAdjacentHex()
@@ -294,10 +295,22 @@ export default class Hex extends Phaser.GameObjects.Polygon {
 
     sacrificeUnit(unit) {
         if(this.logic.health < this.maxHealth) {
+            console.log(unit.logic.health)
             this.logic.health += unit.logic.health;
             unit.kill();
             this.updateHealthBar();
+
+            if(this.logic.health == this.maxHealth) {
+                this.logic.upgradeable = true;
+            }
+            return true;
+        } else if (this.researchHall.isActive()) {
+            const sacrificed = this.researchHall.sacrificeUnit(unit);
+
+            if(sacrificed)
+                return true;
         }
+        return false;
     }
 
     attack(unit) {
@@ -346,21 +359,17 @@ export default class Hex extends Phaser.GameObjects.Polygon {
 
     canSpawn(player) {
         if(this.logic.owned === player && this.logic.health >= this.maxHealth) {
-            console.log("HAS MAX HEALTH")
             return false;
         }
 
         if(this.logic.units.length < 10) {
-            console.log("HAS < 10 UNITS")
             return true;
         }
 
         if(this.logic.units.some(unit => unit.owned !== player)) {
-            console.log("HAS >= 10 UNITS BUT SOME ARE BAD")
             return true;
         }
 
-        console.log("DEFAULT")
         return false;
     }
 
@@ -395,6 +404,34 @@ export default class Hex extends Phaser.GameObjects.Polygon {
             unit.setPosition(this.x, this.y);
             unit.sendTo({x: hex.x, y: hex.y});
         }
+    }
+
+    upgradeToResearchHall(e) {
+        this.setStrokeStyle(3, 0x8888ff)
+        //this.researchHallUpgradeButton.destroy();
+        this.researchHall.setActive(true);
+        this.logic.upgradeable = false;
+        this.logic.health = 0;
+        this.updateHealthBar();
+        this.showUpgrades();
+    }
+
+    downgrade() {
+        if(this.researchHall.isActive()) {
+            this.researchHall.downgrade();
+        }
+    }
+
+    showUpgrades() {
+        /*this.researchHallUpgradeButton = this.scene.uiLayer.add(
+            this.scene.add.rectangle(
+                this.x-this.healthBarWidth/2,
+                this.y-this.healthBarHeight*2,
+                this.healthBarHeight, this.healthBarHeight,
+                0x8888ff, 1
+            )
+        )*/
+        this.scene.menuUI.showHexUI(this)
     }
 
     showHealthBar() {
@@ -435,12 +472,16 @@ export default class Hex extends Phaser.GameObjects.Polygon {
     }   
 
     logicUpdate() {
-        if(this.logic.owned) {
-            if(this.logic.ownedLastUpdate >= this.spawnDelay) {
-                this.spawnUnit();
-                this.logic.ownedLastUpdate = 0;
-            } else {
-                this.logic.ownedLastUpdate++;
+        if(this.researchHall.isActive()) {
+            this.researchHall.logicUpdate();
+        } else {
+            if(this.logic.owned) {
+                if(this.logic.ownedLastUpdate >= this.spawnDelay) {
+                    this.spawnUnit();
+                    this.logic.ownedLastUpdate = 0;
+                } else {
+                    this.logic.ownedLastUpdate++;
+                }
             }
         }
     }

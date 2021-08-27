@@ -17,6 +17,23 @@ export default class Player extends Phaser.GameObjects.Group {
         this.selected = null;
         this.selectedHex = null;
 
+        this.researches = [
+            {
+                name: "+hp/+atk",
+                obtained: false,
+                children: [
+                    {
+                        name: "r1.1",
+                        obtained: false
+                    }
+                ]
+            },
+            {
+                name: "r2",
+                obtained: false
+            }
+        ]
+
         this.load = this.load.bind(this);
         this.save = this.save.bind(this)
     }
@@ -83,6 +100,7 @@ export default class Player extends Phaser.GameObjects.Group {
         }
         
         this.selectedHex = hex;
+        this.scene.menuUI.showHexUI(hex);
     }
 
     clickSelectedHex() {
