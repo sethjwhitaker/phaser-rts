@@ -413,25 +413,18 @@ export default class Hex extends Phaser.GameObjects.Polygon {
         this.logic.upgradeable = false;
         this.logic.health = 0;
         this.updateHealthBar();
-        this.showUpgrades();
+        this.scene.menuUI.updateHexUI(this);
     }
 
     downgrade() {
         if(this.researchHall.isActive()) {
             this.researchHall.downgrade();
         }
-    }
-
-    showUpgrades() {
-        /*this.researchHallUpgradeButton = this.scene.uiLayer.add(
-            this.scene.add.rectangle(
-                this.x-this.healthBarWidth/2,
-                this.y-this.healthBarHeight*2,
-                this.healthBarHeight, this.healthBarHeight,
-                0x8888ff, 1
-            )
-        )*/
-        this.scene.menuUI.showHexUI(this)
+        this.setStrokeStyle(1, 0x000000)
+        if(this.logic.health == this.maxHealth) {
+            this.logic.upgradeable = true;
+        }
+        this.scene.menuUI.updateHexUI(this);
     }
 
     showHealthBar() {

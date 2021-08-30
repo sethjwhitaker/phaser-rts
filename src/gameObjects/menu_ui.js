@@ -70,6 +70,8 @@ export default class MenuUI {
 
         this.createHexTitle(hex)
         
+        console.log(hex);
+
         if(hex.logic.upgradeable) {
             this.createHexUpgradeButton(hex)
         } 
@@ -83,24 +85,6 @@ export default class MenuUI {
         this.hexIsShowing = true;
     }
 
-    updateSingle(hex, ui, condition, callback, createNew) {
-        if(ui) {
-            if(condition) {
-                if(hex !== this.currentHex) {
-                    this.upgradeButton.off("pointerup")
-                    this.upgradeButton.on("pointerup", callback)
-                }
-            } else {
-                this.upgradeButton.destroy();
-                this.upgradeButton = null;
-            }
-        } else {
-            if(condition) {
-                createNew(hex);
-            }
-        }
-    }
-
     updateHexUI(hex) {
         if(this.hexTitle) {
             this.hexTitle.setText(`Hex ${hex.id}`);
@@ -108,18 +92,53 @@ export default class MenuUI {
             this.createHexTitle(hex);
         }
 
-        this.updateSingle(
-            hex, this.upgradeButton, hex.logic.upgradeable,
-            hex.upgradeToResearchHall,this.createHexUpgradeButton
-        )
-        this.updateSingle(
-            hex, this.downgradeButton, hex.researchHall.isActive(),
-            hex.downgrade, this.createHexDowngradeButton
-        )
-        this.updateSingle(
-            hex, this.showResearchesButton, hex.researchHall.isActive(),
-            hex.researchHall.showResearches, this.createShowResearchesButton
-        )
+        if(this.upgradeButton) {
+            if(hex.logic.upgradeable) {
+                if(hex !== this.currentHex) {
+                    this.upgradeButton.off("pointerup")
+                    this.upgradeButton.on("pointerup", hex.upgradeToResearchHall)
+                }
+            } else {
+                this.upgradeButton.destroy();
+                this.upgradeButton = null;
+            }
+        } else {
+            if(hex.logic.upgradeable) {
+                this.createHexUpgradeButton(hex);
+            }
+        }
+
+        if(this.downgradeButton) {
+            if(hex.researchHall.isActive()) {
+                if(hex !== this.currentHex) {
+                    this.downgradeButton.off("pointerup")
+                    this.downgradeButton.on("pointerup", hex.downgrade)
+                }
+            } else {
+                this.downgradeButton.destroy();
+                this.downgradeButton = null;
+            }
+        } else {
+            if(hex.researchHall.isActive()) {
+                this.createHexDowngradeButton(hex);
+            }
+        }
+
+        if(this.showResearchesButton) {
+            if(hex.researchHall.isActive()) {
+                if(hex !== this.currentHex) {
+                    this.showResearchesButton.off("pointerup")
+                    this.showResearchesButton.on("pointerup", hex.researchHall.showResearches)
+                }
+            } else {
+                this.showResearchesButton.destroy();
+                this.showResearchesButton = null;
+            }
+        } else {
+            if(hex.researchHall.isActive()) {
+                this.createShowResearchesButton(hex);
+            }
+        }
 
         if(hex !== this.currentHex) {
             this.currentHex = hex;
