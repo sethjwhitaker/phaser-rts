@@ -3,16 +3,21 @@ export default class MenuUI {
         this.scene = scene;
         this.layer = this.scene.add.layer();
 
+        this.hexIsShowing = false;
+        this.researchesAreShowing = false;
+
         this.currentHex = null;
         this.hexTitle = null;
         this.upgradeButton = null;
         this.showResearchesButton = null;
         this.researches = null;
+        this.researchBackButton = null;
 
         this.createHexTitle = this.createHexTitle.bind(this);
         this.createHexUpgradeButton = this.createHexUpgradeButton.bind(this);
         this.createHexDowngradeButton = this.createHexDowngradeButton.bind(this);
         this.createShowResearchesButton = this.createShowResearchesButton.bind(this);
+        this.showResearchMenu = this.showResearchMenu.bind(this);
         this.updateHexUI = this.updateHexUI.bind(this);
     }
 
@@ -75,6 +80,7 @@ export default class MenuUI {
         }
 
         this.currentHex = hex;
+        this.hexIsShowing = true;
     }
 
     updateSingle(hex, ui, condition, callback, createNew) {
@@ -140,11 +146,13 @@ export default class MenuUI {
             this.showResearchesButton.destroy();
             this.showResearchesButton = null;
         }
+
+        this.hexIsShowing = false;
     }
 
-    showResearchMenu(researches, callback, x, y) {
-        var x = x != null ? x : 100;
-        var y = y != null ? y : 100;
+    showResearches(researches, callback, x, y) {
+        x = x != null ? x : 100;
+        y = y != null ? y : 100;
         if(!this.researches) {
             this.researches = [];
         }
@@ -162,16 +170,44 @@ export default class MenuUI {
                 r.setInteractive().on("pointerup", () => {callback(research)})
             }
             if(research.children) {
-                this.showResearchMenu(research.children, callback, x+r.width+20, y)
+                this.showResearches(research.children, callback, x+r.width+20, y)
             }
             y+=r.height;
         })
+    }
+
+    showResearchMenu(researches, callback) {
+
+        if(this.hexIsShowing) {
+            this.hideHexUI();
+        }
+
+        this.showResearches(researches, callback, 100, 100)
+
+        this.researchBackButton = this.layer.add(this.scene.add.text(
+            100, 400, "Back", {
+                font: "18px Arial",
+                fill: "#ffffff"
+            }
+        )).setInteractive().on("pointerup", () => {
+            this.hideResearchMenu()
+        })
+
+        this.researchesAreShowing = true;
     }
 
     hideResearchMenu() {
         if(this.researches) {
             this.researches.forEach(r => {r.destroy()})
             this.researches = null;
+        }
+        if(this.researchBackButton) {
+            this.researchBackButton.destroy()
+            this.researchBackButton = null;
+        }
+
+        if(this.currentHex !== null) {
+            this.showHexUI(this.currentHex)
         }
     }
 }

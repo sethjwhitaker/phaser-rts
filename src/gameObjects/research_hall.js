@@ -66,6 +66,7 @@ export default class ResearchHall {
         console.log("Start Researching")
         this.logic.researching = research;
         this.showResearchBar();
+        this.hex.scene.menuUI.hideResearchMenu();
     }
 
     unlockResearch() {
@@ -123,6 +124,7 @@ export default class ResearchHall {
     }
 
     hideResearchBar() {
+        console.log("hide research bar")
         if(this.researchBar && this.researchBar.active) {
             this.researchBarContainer.destroy()
             this.researchBar.destroy()
