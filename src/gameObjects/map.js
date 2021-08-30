@@ -15,7 +15,7 @@ export default class Map extends Phaser.GameObjects.Container {
 
         this.scene = scene;
 
-        this.fillColor = 0x49ba5f;
+        this.fillColor = 0x49ba50;
         this.strokeColor = 0x000000;
         this.origin = {
             x: this.scene.sys.game.scale.gameSize.width/2,

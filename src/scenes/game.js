@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import Map from '../gameObjects/map';
+import MenuUI from '../gameObjects/menu_ui';
 import Player from '../gameObjects/player';
 import Unit from '../gameObjects/unit';
 import GameClock from '../util/game_clock';
@@ -119,6 +120,7 @@ export default class GameScene extends Phaser.Scene {
     }
 
     createUI() {
+        this.menuUI = new MenuUI(this);
         const quitButtonEl = document.createElement("button")
         quitButtonEl.innerHTML = "QUIT"
 
@@ -190,7 +192,6 @@ export default class GameScene extends Phaser.Scene {
      * @param {Object} e The event object
      */
     pointerUpHandler(e) {
-        console.log("pointer up")
         // Finished selecting
         if(this.selectRect && this.selectRect.active) {
             this.finishSelect(e)
@@ -225,13 +226,8 @@ export default class GameScene extends Phaser.Scene {
     ----------------------------------------------------------------------
     */
 
-    
-
-    
-
     startGame() {
         this.logicInterval = setInterval(this.logicUpdate, this.logicFrameDelay);
-        setTimeout(this.startText.destroy, 5000);
     }
 
     drag(e) {
@@ -252,7 +248,6 @@ export default class GameScene extends Phaser.Scene {
     }
 
     select(player, rect) {
-        console.log("select")
         player.selected = this.children.getChildren().filter(object => {
             if(object.selectable && object.owned === player &&
                 ((object.x >= rect.x && object.x <= rect.x+rect.width) ||
@@ -275,11 +270,9 @@ export default class GameScene extends Phaser.Scene {
     }
 
     move(player, pos) {
-        console.log("click")
         const hex = this.map.getHexAt(pos);
         if(!hex) return;
 
-        console.log("yup")
         if(player.selected) {// player previously selected units
             player.selected.forEach(unit => {
                 unit.deselect(false);
@@ -351,7 +344,7 @@ export default class GameScene extends Phaser.Scene {
     click(e) {
         const pos = this.cameras.main.getWorldPoint(e.position.x, e.position.y)
 
-        this.scene.get('player-comm').move(pos, this.logicFramesSinceStart+1)
+        this.scene.get('player-comm').move(pos, this.logicFramesSinceStart)
     }
 
     /*
@@ -364,7 +357,6 @@ export default class GameScene extends Phaser.Scene {
     }
 
     checkForWin() {
-        console.log("CHECKING FOR WIN")
         const p1 = this.player.ownedUnits === 0 && this.player.ownedHexes === 0
         const p2 =  this.otherPlayer.ownedUnits === 0 && this.otherPlayer.ownedHexes === 0
         if(p2 && p1) this.draw();
@@ -373,12 +365,12 @@ export default class GameScene extends Phaser.Scene {
     }
 
     draw() {
-        console.log("DRAW")
         this.uiLayer.add(this.add.text(
             this.sys.game.scale.gameSize.width/2,
             this.sys.game.scale.gameSize.height/2,
             "DRAW.", 
             {
+                font: "Arial",
                 color: "#0000ff",
                 padding: {
                     x: 10, 
@@ -391,12 +383,12 @@ export default class GameScene extends Phaser.Scene {
 
     win(player) {
         if(player === this.player) {
-            console.log("YOU WIN")
             this.uiLayer.add(this.add.text(
                 this.sys.game.scale.gameSize.width/2,
                 this.sys.game.scale.gameSize.height/2,
                 "CONGRATULATIONS! YOU WIN!", 
                 {
+                    font: "Arial",
                     color: "#00ff00",
                     padding: {
                         x: 10, 
@@ -406,12 +398,12 @@ export default class GameScene extends Phaser.Scene {
                 }
             ).setOrigin(.5)).setDepth(1);
         } else {
-            console.log("YOU LOSE")
             this.uiLayer.add(this.add.text(
                 this.sys.game.scale.gameSize.width/2,
                 this.sys.game.scale.gameSize.height/2,
                 "SORRY. YOU LOSE.", 
                 {
+                    font: "Arial",
                     color: "#ff0000",
                     padding: {
                         x: 10, 
@@ -490,7 +482,6 @@ export default class GameScene extends Phaser.Scene {
     activateInput(input) {
         switch(input.type) {
             case "select":
-                console.log("Select my guy")
                 this.select(input.player, input.rect);
                 break;
             case "move":
@@ -564,7 +555,7 @@ export default class GameScene extends Phaser.Scene {
     }
 
     logicUpdate() {
-        console.log(this.logicFramesSinceStart)
+        //console.log(this.logicFramesSinceStart)
         this.saveLogicFrame();
 
         
@@ -585,7 +576,7 @@ export default class GameScene extends Phaser.Scene {
         var toRemove = [];
         this.inputBuffer.forEach((input, index) => {
             if(!input.activated) {
-                console.log(input.frame);
+                //console.log(input.frame);
                 if(input.frame === this.logicFramesSinceStart) {
                     console.log("input is on time")
                     this.activateInput(input);
@@ -596,7 +587,6 @@ export default class GameScene extends Phaser.Scene {
                     console.log("input is early")
                 }
             } else {
-                console.log(input)
                 if(input.frame < this.logicFramesSinceStart-10) {
                     toRemove.push(index);
                 }
