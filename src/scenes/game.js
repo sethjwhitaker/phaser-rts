@@ -256,7 +256,12 @@ export default class GameScene extends Phaser.Scene {
                 (object.y <=rect.y && object.y >= rect.y+rect.height))
             ) return true;
         })
+        
         player.selected.forEach(el => el.select())
+
+        if(player.selected.length === 0) {
+            player.selected = null;
+        }
     }
 
     deselect(player, unit) {
@@ -273,7 +278,10 @@ export default class GameScene extends Phaser.Scene {
         const hex = this.map.getHexAt(pos);
         if(!hex) return;
 
-        if(player.selected) {// player previously selected units
+        if(this.settingRallyPoint) {
+            this.settingRallyPoint.setRallyPoint(player, pos)
+            this.settingRallyPoint = false;
+        } else if(player.selected) {// player previously selected units
             player.selected.forEach(unit => {
                 unit.deselect(false);
                 unit.moveUnit(pos)
@@ -634,6 +642,7 @@ export default class GameScene extends Phaser.Scene {
      * @inheritdoc
      */
     update(time, delta) {
+        this.map.update();
         this.children.getChildren().forEach(child => {
             //if(child.shouldUpdate) 
             child.update(time, delta);

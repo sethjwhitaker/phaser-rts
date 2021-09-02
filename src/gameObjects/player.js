@@ -98,7 +98,12 @@ export default class Player extends Phaser.GameObjects.Group {
 
             hex.setFillStyle(shadeColor(hex.fillColor, -0x5))
         }
-        
+        if(this.selectedHex !== hex) {
+            if(this.selectedHex)
+                this.selectedHex.deselect();
+            hex.select();
+        }
+
         this.selectedHex = hex;
         this.scene.menuUI.showHexUI(hex);
     }

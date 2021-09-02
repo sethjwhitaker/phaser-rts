@@ -61,6 +61,27 @@ export default class MenuUI {
             }
         )).setInteractive().on("pointerup", hex.researchHall.showResearches)
     }
+    createSetRallyPointButton(hex) {
+        this.setRallyPointButton = this.layer.add(this.scene.add.text(
+            100, 350,
+            `Set Rally Point`,
+            {
+                font: `20px Arial`,
+                fill: "#ffffff"
+            }
+        )).setInteractive().on("pointerup", hex.setRallyPointStart)
+    }
+
+    createCancelRallyPointButton(hex) {
+        this.cancelRallyPointButton = this.layer.add(this.scene.add.text(
+            100, 400,
+            `Cancel`,
+            {
+                font: `20px Arial`,
+                fill: "#ffffff"
+            }
+        )).setInteractive().on("pointerup", hex.cancelSetRallyPoint)
+    }
 
     showHexUI(hex) {
         if(this.currentHex !== null) {
@@ -79,6 +100,14 @@ export default class MenuUI {
         if(hex.researchHall.isActive()) {
             this.createShowResearchesButton(hex)
             this.createHexDowngradeButton(hex)
+        }
+
+        if(hex.logic.owned === this.scene.player && !hex.settingRallyPoint) {
+            this.createSetRallyPointButton(hex);
+        }
+
+        if(hex.settingRallyPoint) {
+            this.createCancelRallyPointButton(hex)
         }
 
         this.currentHex = hex;
@@ -140,6 +169,38 @@ export default class MenuUI {
             }
         }
 
+        if(this.setRallyPointButton) {
+            if(hex.logic.owned === this.scene.player && !hex.settingRallyPoint) {
+                if(hex !== this.currentHex) {
+                    this.setRallyPointButton.off("pointerup")
+                    this.setRallyPointButton.on("pointerup", hex.setRallyPointStart)
+                }
+            } else {
+                this.setRallyPointButton.destroy();
+                this.setRallyPointButton = null;
+            }
+        } else {
+            if(hex.logic.owned === this.scene.player && !hex.settingRallyPoint) {
+                this.createSetRallyPointButton(hex);
+            }
+        }
+
+        if(this.cancelRallyPointButton) {
+            if(hex.settingRallyPoint) {
+                if(hex !== this.currentHex) {
+                    this.cancelRallyPointButton.off("pointerup")
+                    this.cancelRallyPointButton.on("pointerup", hex.cancelSetRallyPoint)
+                }
+            } else {
+                this.cancelRallyPointButton.destroy();
+                this.cancelRallyPointButton = null;
+            }
+        } else {
+            if(hex.settingRallyPoint) {
+                this.createCancelRallyPointButton(hex);
+            }
+        }
+
         if(hex !== this.currentHex) {
             this.currentHex = hex;
         }
@@ -164,6 +225,16 @@ export default class MenuUI {
         if(this.showResearchesButton) {
             this.showResearchesButton.destroy();
             this.showResearchesButton = null;
+        }
+
+        if(this.setRallyPointButton) {
+            this.setRallyPointButton.destroy();
+            this.setRallyPointButton = null;
+        }
+
+        if(this.cancelRallyPointButton) {
+            this.cancelRallyPointButton.destroy();
+            this.cancelRallyPointButton = null;
         }
 
         this.hexIsShowing = false;
