@@ -58,6 +58,7 @@ export default class Hex extends Phaser.GameObjects.Polygon {
         ])
         this.logic = {
             slotsInUse: [],
+            rallyHex: null,
             units: [],
             health: 0,
             owned: null,
@@ -80,6 +81,9 @@ export default class Hex extends Phaser.GameObjects.Polygon {
         this.addUnits = this.addUnits.bind(this);
         this.load = this.load.bind(this);
         this.save = this.save.bind(this);
+        this.setRallyPointStart = this.setRallyPointStart.bind(this);
+        this.cancelSetRallyPoint = this.cancelSetRallyPoint.bind(this);
+        this.removeRallyPoint = this.removeRallyPoint.bind(this);
         this.removeUnit = this.removeUnit.bind(this);
         this.assignSlot = this.assignSlot.bind(this);
         this.unassignSlot = this.unassignSlot.bind(this);
@@ -132,6 +136,93 @@ export default class Hex extends Phaser.GameObjects.Polygon {
         obj.id = this.id;
 
         return obj
+    }
+
+    select() {
+        this.selected = true;
+        if(this.logic.rallyHex) {
+            this.showRallyPointLine();
+        }
+    }
+
+    deselect() {
+        this.selected = false;
+        if(this.rallyPointLine) {
+            this.hideRallyPointLine();
+        }
+    }
+
+    showRallyPointLine() {
+        if(this.logic.rallyHex) {
+            if(this.rallyPointLine && this.rallyPointLine.active) {
+                this.rallyPointLine.destroy();
+            }
+            this.rallyPointLine = this.scene.add.line(
+                0, 0, this.x, this.y, 
+                this.logic.rallyHex.x, 
+                this.logic.rallyHex.y, 
+                0xffffff, 1).setOrigin(0);
+            if(this.rallyPointCircle && this.rallyPointCircle) {
+                this.rallyPointCircle.destroy();
+            }
+            this.rallyPointCircle = this.scene.add.circle(
+                this.logic.rallyHex.x, this.logic.rallyHex.y,
+                20, 0xffffff, 0
+            ).setStrokeStyle(2, 0xffffff, 1).setOrigin(.5)
+        }
+       
+        
+    }
+
+    hideRallyPointLine() {
+        if(this.rallyPointLine && this.rallyPointLine.active) {
+            this.rallyPointLine.destroy();
+            this.rallyPointLine = null;
+        }
+        if(this.rallyPointCircle && this.rallyPointCircle.active) {
+            this.rallyPointCircle.destroy()
+            this.rallyPointCricle = null;
+        }
+    }
+
+    setRallyPointStart() {
+        this.setRallyPointLine = this.scene.add.line(
+                0, 0, this.x, this.y, 
+                this.scene.input.activePointer.x, 
+                this.scene.input.activePointer.y, 
+                0xffffff, 1).setOrigin(0);
+        this.settingRallyPoint = true;
+        this.scene.settingRallyPoint = this;
+        if(this.selected) 
+            this.scene.menuUI.updateHexUI(this);
+    }
+
+    cancelSetRallyPoint() {
+        this.setRallyPointLine.destroy();
+        this.setRallyPointLine = null;
+        this.settingRallyPoint = false;
+        this.scene.settingRallyPoint = null;
+        if(this.selected) 
+            this.scene.menuUI.updateHexUI(this);
+    }
+
+    setRallyPoint(player, pos) {
+        this.setRallyPointLine.destroy();
+        this.setRallyPointLine = null;
+        this.logic.rallyHex = this.scene.map.getHexAt(pos);
+        this.showRallyPointLine()
+        this.settingRallyPoint = false;
+        this.scene.settingRallyPoint = null;
+        if(this.selected) 
+            this.scene.menuUI.updateHexUI(this);
+    }
+
+    removeRallyPoint() {
+        this.logic.rallyHex = null;
+        this.hideRallyPointLine();
+        if(this.selected) {
+            this.scene.menuUI.updateHexUI(this);
+        }
     }
 
     getAdjacentHexes() {
@@ -219,7 +310,7 @@ export default class Hex extends Phaser.GameObjects.Polygon {
     assignSlot(unit) {
         var index = this.logic.slotsInUse.indexOf(false);
         if(index < 0) {
-            return false // make it so units arriving at a full hex get directed elsewhere*/
+            return false
         }
 
         var closestDistance = this.calculateDistance(
@@ -261,6 +352,10 @@ export default class Hex extends Phaser.GameObjects.Polygon {
                 const sacrificed = this.sacrificeUnit(unit);
                 if(sacrificed)
                     return;
+                if(this.logic.rallyHex) {
+                    unit.sendTo(this.logic.rallyHex);
+                    return;
+                }
             } else {
                 const assigned = this.assignSlot(unit);
                 if(assigned) return;
@@ -302,6 +397,8 @@ export default class Hex extends Phaser.GameObjects.Polygon {
 
             if(this.logic.health == this.maxHealth) {
                 this.logic.upgradeable = true;
+                if(this.selected)
+                    this.scene.menuUI.updateHexUI(this);
             }
             return true;
         } else if (this.researchHall.isActive()) {
@@ -341,6 +438,8 @@ export default class Hex extends Phaser.GameObjects.Polygon {
         for(var i = this.logic.units.length-1; i >= 0; i--)
             this.logic.units[i].kill();
         this.updateHealthBar();
+        if(this.selected)
+            this.scene.menuUI.updateHexUI(this); // needs to check if is selected
     }
 
     checkOwned() {
@@ -392,7 +491,13 @@ export default class Hex extends Phaser.GameObjects.Polygon {
     }
 
     spawnUnit() {
-        const hex = this.getOpenAdjacentHex();
+        var hex 
+        if(this.logic.rallyHex) {
+            hex = this.logic.rallyHex
+        } else {
+            hex = this.getOpenAdjacentHex();
+        }
+        
         if(hex) {
             const unit = this.scene.add.existing(new Unit(this.scene, this.logic.owned, {
                 x: 0,
@@ -413,7 +518,8 @@ export default class Hex extends Phaser.GameObjects.Polygon {
         this.logic.upgradeable = false;
         this.logic.health = 0;
         this.updateHealthBar();
-        this.scene.menuUI.updateHexUI(this);
+        if(this.selected)
+            this.scene.menuUI.updateHexUI(this);
     }
 
     downgrade() {
@@ -424,7 +530,8 @@ export default class Hex extends Phaser.GameObjects.Polygon {
         if(this.logic.health == this.maxHealth) {
             this.logic.upgradeable = true;
         }
-        this.scene.menuUI.updateHexUI(this);
+        if(this.selected)
+            this.scene.menuUI.updateHexUI(this);
     }
 
     showHealthBar() {
@@ -476,6 +583,14 @@ export default class Hex extends Phaser.GameObjects.Polygon {
                     this.logic.ownedLastUpdate++;
                 }
             }
+        }
+    }
+
+    update() {
+        if(this.settingRallyPoint) {
+            this.setRallyPointLine.setTo(this.x, this.y, 
+                this.scene.input.activePointer.x,
+                this.scene.input.activePointer.y)
         }
     }
 }
