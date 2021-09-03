@@ -83,6 +83,7 @@ export default class Hex extends Phaser.GameObjects.Polygon {
         this.save = this.save.bind(this);
         this.setRallyPointStart = this.setRallyPointStart.bind(this);
         this.cancelSetRallyPoint = this.cancelSetRallyPoint.bind(this);
+        this.removeRallyPoint = this.removeRallyPoint.bind(this);
         this.removeUnit = this.removeUnit.bind(this);
         this.assignSlot = this.assignSlot.bind(this);
         this.unassignSlot = this.unassignSlot.bind(this);
@@ -216,6 +217,14 @@ export default class Hex extends Phaser.GameObjects.Polygon {
             this.scene.menuUI.updateHexUI(this);
     }
 
+    removeRallyPoint() {
+        this.logic.rallyHex = null;
+        this.hideRallyPointLine();
+        if(this.selected) {
+            this.scene.menuUI.updateHexUI(this);
+        }
+    }
+
     getAdjacentHexes() {
         this.adjacentHexes = this.scene.map.getAdjacentHexes(this);
         return this.adjacentHexes;
@@ -301,7 +310,7 @@ export default class Hex extends Phaser.GameObjects.Polygon {
     assignSlot(unit) {
         var index = this.logic.slotsInUse.indexOf(false);
         if(index < 0) {
-            return false // make it so units arriving at a full hex get directed elsewhere*/
+            return false
         }
 
         var closestDistance = this.calculateDistance(
@@ -343,6 +352,10 @@ export default class Hex extends Phaser.GameObjects.Polygon {
                 const sacrificed = this.sacrificeUnit(unit);
                 if(sacrificed)
                     return;
+                if(this.logic.rallyHex) {
+                    unit.sendTo(this.logic.rallyHex);
+                    return;
+                }
             } else {
                 const assigned = this.assignSlot(unit);
                 if(assigned) return;

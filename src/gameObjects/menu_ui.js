@@ -83,6 +83,17 @@ export default class MenuUI {
         )).setInteractive().on("pointerup", hex.cancelSetRallyPoint)
     }
 
+    createRemoveRallyPointButton(hex) {
+        this.removeRallyPointButton = this.layer.add(this.scene.add.text(
+            100, 450,
+            `Remove Rally Point`,
+            {
+                font: `20px Arial`,
+                fill: "#ffffff"
+            }
+        )).setInteractive().on("pointerup", hex.removeRallyPoint)
+    }
+
     showHexUI(hex) {
         if(this.currentHex !== null) {
             this.updateHexUI(hex)
@@ -108,6 +119,10 @@ export default class MenuUI {
 
         if(hex.settingRallyPoint) {
             this.createCancelRallyPointButton(hex)
+        }
+
+        if(hex.logic.rallyHex) {
+            this.createRemoveRallyPointButton(hex)
         }
 
         this.currentHex = hex;
@@ -201,6 +216,22 @@ export default class MenuUI {
             }
         }
 
+        if(this.removeRallyPointButton) {
+            if(hex.logic.rallyHex) {
+                if(hex !== this.currentHex) {
+                    this.removeRallyPointButton.off("pointerup")
+                    this.removeRallyPointButton.on("pointerup", hex.removeRallyPoint)
+                }
+            } else {
+                this.removeRallyPointButton.destroy();
+                this.removeRallyPointButton = null;
+            }
+        } else {
+            if(hex.logic.rallyHex) {
+                this.createRemoveRallyPointButton(hex);
+            }
+        }
+
         if(hex !== this.currentHex) {
             this.currentHex = hex;
         }
@@ -235,6 +266,11 @@ export default class MenuUI {
         if(this.cancelRallyPointButton) {
             this.cancelRallyPointButton.destroy();
             this.cancelRallyPointButton = null;
+        }
+
+        if(this.removeRallyPointButton) {
+            this.removeRallyPointButton.destroy();
+            this.removeRallyPointButton = null;
         }
 
         this.hexIsShowing = false;
