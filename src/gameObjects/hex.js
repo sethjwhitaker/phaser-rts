@@ -1,7 +1,9 @@
 import Phaser from 'phaser';
 import Unit from './unit';
 import Perspective from '../util/perspective';
+import Color from '../util/color';
 import ResearchHall from './research_hall';
+
 
 /**
  * This is a GameObject representing one of the tiles.
@@ -138,8 +140,17 @@ export default class Hex extends Phaser.GameObjects.Polygon {
         return obj
     }
 
+    refreshColor() {
+        if(this.selected) {
+            this.setFillStyle(Color.shadeColor(this.color, -0x5))
+        } else {
+            this.setFillStyle(this.color, 1);
+        }
+    }
+
     select() {
         this.selected = true;
+        this.refreshColor();
         if(this.logic.rallyHex) {
             this.showRallyPointLine();
         }
@@ -147,6 +158,7 @@ export default class Hex extends Phaser.GameObjects.Polygon {
 
     deselect() {
         this.selected = false;
+        this.refreshColor();
         if(this.rallyPointLine) {
             this.hideRallyPointLine();
         }
@@ -263,13 +275,6 @@ export default class Hex extends Phaser.GameObjects.Polygon {
                 }
             }
         }
-
-        /*if(this.logic.units.length > 0) {
-            if(unit.owned != this.logic.units[0].owned) {
-                unit.fight(this.logic.units[0]);
-                return true;
-            }
-        }*/
 
         if(this.logic.units.length >= 10) {
             return false;
@@ -433,8 +438,10 @@ export default class Hex extends Phaser.GameObjects.Polygon {
     capture(player) {
         this.logic.owned = player;
         player.ownedHexes++;
-        this.setFillStyle(player.color);
-        this.color = player.color;
+
+        this.color = player.color;   
+        this.refreshColor();
+        
         for(var i = this.logic.units.length-1; i >= 0; i--)
             this.logic.units[i].kill();
         this.updateHealthBar();
